@@ -56,33 +56,132 @@ namespace EmuLibrary
     {
         public class BufferEntry
         {
-            public uint Tkeep;
+            private uint _tkeep;
 
-            public bool Tlast;
+            private bool _tlast;
 
-            public ulong Tdata0;
+            private ulong _tdata0;
 
-            public ulong Tdata1;
+            private ulong _tdata1;
 
-            public ulong Tdata2;
+            private ulong _tdata2;
 
-            public ulong Tdata3;
+            private ulong _tdata3;
 
-            public ulong TuserHi;
+            private ulong _tuserHi;
 
-            public ulong TuserLow;
+            private ulong _tuserLow;
 
-            public void update(uint tkeep, bool tlast, ulong tdata0, ulong tdata1, ulong tdata2, ulong tdata3,
+            public uint Tkeep
+            {
+                get { return _tkeep; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tkeep = value;
+                    }
+                }
+            }
+
+            public bool Tlast
+            {
+                get { return _tlast; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tlast = value;
+                    }
+                }
+            }
+
+            public ulong Tdata0
+            {
+                get { return _tdata0; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tdata0 = value;
+                    }
+                }
+            }
+
+            public ulong Tdata1
+            {
+                get { return _tdata1; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tdata1 = value;
+                    }
+                }
+            }
+
+            public ulong Tdata2
+            {
+                get { return _tdata2; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tdata2 = value;
+                    }
+                }
+            }
+
+            public ulong Tdata3
+            {
+                get { return _tdata3; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tdata3 = value;
+                    }
+                }
+            }
+
+            public ulong TuserHi
+            {
+                get { return _tuserHi; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tuserHi = value;
+                    }
+                }
+            }
+
+            public ulong TuserLow
+            {
+                get { return _tuserLow; }
+                set
+                {
+                    lock (this)
+                    {
+                        _tuserLow = value;
+                    }
+                }
+            }
+
+            public void Update(uint tkeep, bool tlast, ulong tdata0, ulong tdata1, ulong tdata2, ulong tdata3,
                 ulong tuserHi, ulong tuserLow)
             {
-                Tkeep = tkeep;
-                Tlast = tlast;
-                Tdata0 = tdata0;
-                Tdata1 = tdata1;
-                Tdata2 = tdata2;
-                Tdata3 = tdata3;
-                TuserHi = tuserHi;
-                TuserLow = tuserLow;
+                lock (this)
+                {
+                    Tkeep = tkeep;
+                    Tlast = tlast;
+                    Tdata0 = tdata0;
+                    Tdata1 = tdata1;
+                    Tdata2 = tdata2;
+                    Tdata3 = tdata3;
+                    TuserHi = tuserHi;
+                    TuserLow = tuserLow;
+                }
             }
         }
 
@@ -101,6 +200,7 @@ namespace EmuLibrary
         private ulong[] _tuser_hi; // unused
         private ulong[] _tuser_low;
         private uint[] _pstart;
+        private bool[] _valid;
         private uint _curstart = 0;
 
         public BufferEntry PopData = new BufferEntry();
@@ -146,6 +246,23 @@ namespace EmuLibrary
             return (peekloc != writeloc);
         }
 
+        public bool ForwardPeek()
+        {
+            lock (PeekData)
+            {
+                if (writeloc == 0)
+                {
+                    peekloc = bufsize - 1;
+                }
+                else
+                {
+                    peekloc = writeloc - 1;
+                }
+                
+                return Peek();
+            }
+        }
+
         public bool Push(uint tkeep, bool tlast, ulong tdata_0, ulong tdata_1, ulong tdata_2, ulong tdata_3,
             ulong tuser_hi, ulong tuser_low, bool pstart = false)
         {
@@ -156,6 +273,7 @@ namespace EmuLibrary
                 {
                     _curstart = writeloc;
                 }
+
                 _tkeep[writeloc] = tkeep;
                 _tlast[writeloc] = tlast;
                 _tdata_0[writeloc] = tdata_0;
@@ -165,6 +283,7 @@ namespace EmuLibrary
                 _tuser_hi[writeloc] = tuser_hi;
                 _tuser_low[writeloc] = tuser_low;
                 _pstart[writeloc] = _curstart;
+                _valid[writeloc] = true;
                 writeloc++;
                 count++;
                 if (writeloc >= size)
@@ -176,61 +295,73 @@ namespace EmuLibrary
             return true;
         }
 
+        public bool Push(BufferEntry be, bool pstart = false)
+        {
+            return Push(be.Tkeep, be.Tlast, be.Tdata0, be.Tdata1, be.Tdata2, be.Tdata3, be.TuserHi, be.TuserHi, pstart);
+        }
+
+        public bool UpdatePeek(BufferEntry be)
+        {
+            lock (_lck)
+            {
+                lock (PeekData)
+                {
+                    if (!_valid[peekloc]) return false;
+                    _tkeep[peekloc] = be.Tkeep;
+                    _tlast[peekloc] = be.Tlast;
+                    _tdata_0[peekloc] = be.Tdata0;
+                    _tdata_1[peekloc] = be.Tdata1;
+                    _tdata_2[peekloc] = be.Tdata2;
+                    _tdata_3[peekloc] = be.Tdata3;
+                    _tuser_hi[peekloc] = be.TuserHi;
+                    _tuser_low[peekloc] = be.TuserLow;
+                    return true;
+                }
+            }
+        }
+
         public bool Pop(bool movePeek = false)
         {
             if (!CanPop(movePeek)) return false;
-            lock (PopData)
+            lock (_lck)
             {
-                lock (_lck)
+                lock (PopData)
                 {
-                    PopData.update(_tkeep[poploc], _tlast[poploc], _tdata_0[poploc], _tdata_1[poploc], _tdata_2[poploc],
+
+                    PopData.Update(_tkeep[poploc], _tlast[poploc], _tdata_0[poploc], _tdata_1[poploc], _tdata_2[poploc],
                         _tdata_3[poploc], _tuser_hi[poploc], _tuser_low[poploc]);
 
-                    poploc++;
+                    _valid[poploc] = false;
+
+                    poploc = (poploc + 1) % size;
                     count--;
 
-                    if (poploc >= size) poploc = 0;
                     if (movePeek) peekloc = poploc;
+                    
+                    return true;
                 }
             }
-
-            return true;
         }
 
         public bool AdvancePeek()
         {
-            if (!CanAdvance()) return false;
-            lock (PeekData)
-            {
-                lock (_lck)
-                {
-                    peekloc++;
-
-                    if (peekloc >= size)
-                    {
-                        peekloc = 0;
-                    }
-
-                    PeekData.update(_tkeep[peekloc], _tlast[peekloc], _tdata_0[peekloc], _tdata_1[peekloc],
-                        _tdata_2[peekloc], _tdata_3[peekloc], _tuser_hi[peekloc], _tuser_low[peekloc]);
-                }
-            }
-
-            return true;
+            return Peek(true);
         }
 
-        public void WritePeek()
+        public bool Peek(bool advance = false)
         {
             lock (_lck)
             {
-                _tkeep[peekloc] = PeekData.Tkeep;
-                _tlast[peekloc] = PeekData.Tlast;
-                _tdata_0[peekloc] = PeekData.Tdata0;
-                _tdata_1[peekloc] = PeekData.Tdata1;
-                _tdata_2[peekloc] = PeekData.Tdata2;
-                _tdata_3[peekloc] = PeekData.Tdata3;
-                _tuser_hi[peekloc] = PeekData.TuserHi;
-                _tuser_low[peekloc] = PeekData.TuserLow;
+                lock (PeekData)
+                {
+                    if (advance && CanAdvance()) peekloc = (peekloc + 1) % size;
+                    else if (!CanAdvance()) return false;
+
+                    PeekData.Update(_tkeep[peekloc], _tlast[peekloc], _tdata_0[peekloc], _tdata_1[peekloc],
+                        _tdata_2[peekloc], _tdata_3[peekloc], _tuser_hi[peekloc], _tuser_low[peekloc]);
+
+                    return _valid[peekloc];
+                }
             }
         }
     }

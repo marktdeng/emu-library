@@ -475,6 +475,8 @@ namespace EmuLibrary
 
             data0 = destMac | srcMac << (byte) 48;
             data1 = srcMac >> 16 | ethertype << 32;
+            
+            
         }
 
         public void WriteIPv4Header(CircularFrameBuffer cfb, IPv4Parser ip)

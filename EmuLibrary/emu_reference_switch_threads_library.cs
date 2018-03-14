@@ -258,8 +258,8 @@ class EmuReferenceSwitchThreads : Emu
         return 0;
     }
 
-    static int Main()
-    {
-        return 0;
-    }
+    //static int Main()
+    //{
+    //    return 0;
+    //}
 }

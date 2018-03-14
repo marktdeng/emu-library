@@ -20,7 +20,7 @@ namespace EmuLibrary
         public static void SetDestInterface(byte portNumber, CircularFrameBuffer cfb)
         {
             cfb.PeekData.TuserLow = (cfb.PeekData.TuserLow & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
-            cfb.WritePeek();
+            cfb.UpdatePeek(cfb.PeekData);
         }
     }
 
