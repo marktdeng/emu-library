@@ -304,7 +304,7 @@
 
             public uint Tkeep
             {
-                get => _tkeep;
+                get { return _tkeep; }
                 set
                 {
                     lock (this)
@@ -316,7 +316,7 @@
 
             public bool Tlast
             {
-                get => _tlast;
+                get { return _tlast; }
                 set
                 {
                     lock (this)
@@ -328,7 +328,7 @@
 
             public ulong Tdata0
             {
-                get => _tdata0;
+                get { return _tdata0; }
                 set
                 {
                     lock (this)
@@ -340,7 +340,7 @@
 
             public ulong Tdata1
             {
-                get => _tdata1;
+                get { return _tdata1; }
                 set
                 {
                     lock (this)
@@ -352,7 +352,7 @@
 
             public ulong Tdata2
             {
-                get => _tdata2;
+                get { return _tdata2; }
                 set
                 {
                     lock (this)
@@ -364,7 +364,7 @@
 
             public ulong Tdata3
             {
-                get => _tdata3;
+                get { return _tdata3; }
                 set
                 {
                     lock (this)
@@ -376,7 +376,7 @@
 
             public ulong TuserHi
             {
-                get => _tuserHi;
+                get { return _tuserHi; }
                 set
                 {
                     lock (this)
@@ -388,7 +388,7 @@
 
             public ulong TuserLow
             {
-                get => _tuserLow;
+                get { return _tuserLow; }
                 set
                 {
                     lock (this)
