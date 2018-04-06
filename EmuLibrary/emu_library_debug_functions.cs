@@ -4,26 +4,47 @@
 // All rights reserved
 //
 
-using KiwiSystem;
+using System;
+using System.Runtime.Serialization;
 
 // ReSharper disable InconsistentNaming
 
 namespace EmuLibrary
 {
+    public class EmuInterruptException : Exception
+    {
+        public EmuInterruptException()
+        {
+        }
+
+        public EmuInterruptException(string message) : base(message)
+        {
+        }
+
+        public EmuInterruptException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected EmuInterruptException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
+
     public static class debug_functions
     {
-        private static bool interrupts_enabled = false;
-        
         public const byte PACKET_DROP = 0;
         public const byte PACKET_BUFFER_FULL = 1;
-        public const byte SEND_NOT_READY = 2;
-        public const byte PARSE_FAIL = 3;
-        public const byte ILLEGAL_PACKET_FORMAT = 4;
-        public const byte EMPTY_PACKET = 5;
-        public const byte FIFO_FULL = 6;
-        public const byte FIFO_EMPTY = 7;
-        public const byte AXI_NOT_READY = 8;
-        public const byte AXI_NOT_VALID = 9;
+        public const byte PACKET_BUFFER_INVALID = 2;
+        public const byte SEND_NOT_READY = 3;
+        public const byte PARSE_FAIL = 4;
+        public const byte ILLEGAL_PACKET_FORMAT = 5;
+        public const byte EMPTY_PACKET = 6;
+        public const byte FIFO_FULL = 7;
+        public const byte FIFO_EMPTY = 8;
+        public const byte AXI_NOT_READY = 9;
+        public const byte AXI_NOT_VALID = 10;
+        private static bool interrupts_enabled;
+        private static readonly bool enable_software_exceptions = false;
 
         public static void interrupts_enable()
         {
@@ -34,12 +55,13 @@ namespace EmuLibrary
         {
             interrupts_enabled = false;
         }
-        
+
         public static void push_interrupt(byte errortype)
         {
             if (interrupts_enabled)
             {
-                Emu.Interrupts = Emu.Interrupts | 1ul << errortype;
+                Emu.Interrupts = Emu.Interrupts | (1ul << errortype);
+                if (enable_software_exceptions) throw new EmuInterruptException(Emu.Interrupts.ToString());
             }
         }
 

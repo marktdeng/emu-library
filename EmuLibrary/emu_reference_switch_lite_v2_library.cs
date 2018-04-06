@@ -33,17 +33,17 @@
 //		-KiwiC Version Alpha 0.3.1x
 //
 
-using KiwiSystem;
 using EmuLibrary;
+using KiwiSystem;
 
-class Reference_Switch_Lite_V2_Library : Emu
+internal class Reference_Switch_Lite_V2_Library : Emu
 {
     // This class describes the OPL of the reference_switch_lite of the NetFPGA
 
     // Constants variables
-    const uint LUT_SIZE = 16U;
+    private const uint LUT_SIZE = 16U;
 
-    const uint BUF_SIZE = 200U; // Max frame size = 1526 Bytes ~ 191x8Bxmd entries
+    private const uint BUF_SIZE = 200U; // Max frame size = 1526 Bytes ~ 191x8Bxmd entries
 
     // Lookup Table -- Register based LUT
     // Here we need to initialise (with something) the table with 0x01 instead of
@@ -54,7 +54,7 @@ class Reference_Switch_Lite_V2_Library : Emu
     // |-		64bit		-|
     // |-	48bit	--	16bit	-|
     // |-	MAC	--	port	-|
-    private static readonly ulong[] LUT = new ulong[]
+    private static readonly ulong[] LUT =
     {
         0x0000000000000001, 0x0000000000000001, 0x0000000000000001, 0x0000000000000001,
         0x0000000000000001, 0x0000000000000001, 0x0000000000000001, 0x0000000000000001,
@@ -64,9 +64,9 @@ class Reference_Switch_Lite_V2_Library : Emu
 
     // Internal buffer to keep the whole packet
     // TODO maybe we dont need all these buffers as we make the decision based on the first frame
-    static CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
+    private static readonly CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
 
-    static HeaderParse _parser = new HeaderParse();
+    private static readonly HeaderParse _parser = new HeaderParse();
 
     // This method describes the operations required to route the frames
     public static void switch_logic()
@@ -82,15 +82,15 @@ class Reference_Switch_Lite_V2_Library : Emu
             // Procedure call for receiving the first frame of the packet
             cnt = 0U;
 
-            m_axis_tdata_0 = (ulong) 0x0;
-            m_axis_tdata_1 = (ulong) 0x0;
-            m_axis_tdata_2 = (ulong) 0x0;
-            m_axis_tdata_3 = (ulong) 0x0;
+            m_axis_tdata_0 = 0x0;
+            m_axis_tdata_1 = 0x0;
+            m_axis_tdata_2 = 0x0;
+            m_axis_tdata_3 = 0x0;
 
-            m_axis_tkeep = (uint) 0x0;
+            m_axis_tkeep = 0x0;
             m_axis_tlast = false;
-            m_axis_tuser_hi = (ulong) 0x0;
-            m_axis_tuser_low = (ulong) 0x0;
+            m_axis_tuser_hi = 0x0;
+            m_axis_tuser_low = 0x0;
             s_axis_tready = true;
 
             Kiwi.Pause();
@@ -117,26 +117,27 @@ class Reference_Switch_Lite_V2_Library : Emu
             broadcast_ports = _parser.ep.BroadcastPorts;
             ulong OQ = 0;
             // Search the LUT for the dst_mac and for the src_mac
-            for (i = 0U; (uint) i < (uint) LUT_SIZE; i = i + 1U)
+            for (i = 0U; i < LUT_SIZE; i = i + 1U)
             {
                 tmp1 = LUT[i];
                 Kiwi.Pause();
                 // Get the mac address from LUT
-                tmp = tmp1 & (ulong) 0xffffffffffff0000;
+                tmp = tmp1 & 0xffffffffffff0000;
                 // Get the output port from LUT
-                tmp2 = tmp1 & (ulong) 0x00000000000000ff;
+                tmp2 = tmp1 & 0x00000000000000ff;
 
                 // Check if we have a hit in the LUT for the dst_mac
-                if (dst_mac == tmp >> (byte) 16)
+                if (dst_mac == tmp >> 16)
                 {
                     // Get the engress port numnber from the LUT
                     OQ = tmp2;
                     LUT_hit = true;
                     //break;
                 }
+
                 // Here we check if we need to update an entry based on the src_mac
                 // Get rid off the oq, keep only the mac
-                if (src_mac == tmp >> (byte) 16)
+                if (src_mac == tmp >> 16)
                 {
                     // Update if needed
                     // tmp0	= tmp | (metadata & (ulong)0x00ff0000)>>(byte)16;
@@ -144,6 +145,7 @@ class Reference_Switch_Lite_V2_Library : Emu
                     ptr = i;
                     //break;
                 }
+
                 // Save some cycles (maybe)
                 if (LUT_hit && exist)
                     break;
@@ -151,16 +153,16 @@ class Reference_Switch_Lite_V2_Library : Emu
 
             // If we have a LUT hit prepare the appropriate output port in the metadata, otherwise flood    
 
-            InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) (OQ) : (byte) (broadcast_ports), cfb);
+            InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) OQ : (byte) broadcast_ports, cfb);
 
             // Update entry
-            if (exist) LUT[ptr] = src_mac << (byte) 16 | (ulong) ((metadata >> (byte) 16) & (ulong) 0x00ff);
+            if (exist) LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
             Kiwi.Pause();
             // Create entry
             if (!LUT_hit)
             {
-                LUT[ptr] = src_mac << (byte) 16 | (ulong) ((metadata >> (byte) 16) & (ulong) 0x00ff);
-                free = (free > (uint) (LUT_SIZE - 1U)) ? 0U : free = free + 1U;
+                LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
+                free = free > LUT_SIZE - 1U ? 0U : free = free + 1U;
             }
             // #############################
             // # Switch Logic -- END 
@@ -183,8 +185,8 @@ class Reference_Switch_Lite_V2_Library : Emu
     // #############################
     // # Main Hardware Entry point
     // #############################
-    [Kiwi.HardwareEntryPoint()]
-    static int EntryPoint()
+    [Kiwi.HardwareEntryPoint]
+    private static int EntryPoint()
     {
         while (true) switch_logic();
     }

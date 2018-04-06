@@ -28,10 +28,10 @@
 //
 
 using System.Threading;
-using KiwiSystem;
 using EmuLibrary;
+using KiwiSystem;
 
-class EmuReferenceSwitchThreads : Emu
+internal class EmuReferenceSwitchThreads : Emu
 {
     // This class describes the OPL of the reference_switch of the NetFPGA
 
@@ -43,22 +43,50 @@ class EmuReferenceSwitchThreads : Emu
 
 
     // Constants variables
-    const uint LUT_SIZE = 16U;
+    private const uint LUT_SIZE = 16U;
 
-    [Kiwi.Volatile] static ulong dst_mac, src_mac;
-    [Kiwi.Volatile] static ulong broadcast_ports;
-    [Kiwi.Volatile] static ulong metadata = 0UL;
-    [Kiwi.Volatile] static bool eth_header_rdy = false;
-    
-    static fifo_interface fifo = new fifo_interface();
+    [Kiwi.Volatile] private static ulong dst_mac, src_mac;
+    [Kiwi.Volatile] private static ulong broadcast_ports;
+    [Kiwi.Volatile] private static ulong metadata;
+    [Kiwi.Volatile] private static bool eth_header_rdy;
+
+    private static readonly fifo_interface fifo = new fifo_interface();
+
+    // #############################
+    // # Main Hardware Enrty point
+    // #############################
+    [Kiwi.HardwareEntryPoint]
+    private static int EntryPoint()
+    {
+        // Create and start the thread for the CAM controller
+        var cam_controller = new CAM_controller();
+        var CAM_lookup_n_learn = new Thread(cam_controller.CAM_lookup_n_learn);
+        CAM_lookup_n_learn.Start();
+
+        // Create and start the thread for the ethernet parser
+        var eth_controller = new Ethernet();
+        var eth_ctrl = new Thread(eth_controller.eth_parser);
+        eth_ctrl.Start();
+
+        // Create and start the thread for the FIFO controller
+        var fifo_controller = new FIFO_controller();
+//		Thread FIFO_receive = new Thread(new ThreadStart(fifo_controller.FIFO_receive));
+//		FIFO_receive.Start();
+        var FIFO_send = new Thread(fifo_controller.FIFO_send);
+        FIFO_send.Start();
+        while (true) Kiwi.Pause();
+        ;
+        return 0;
+    }
 
     //	This class descirbes the parser for the ethernet header
     public class Ethernet
     {
-        static CircularFrameBuffer cfb = new CircularFrameBuffer(1);
+        private static readonly CircularFrameBuffer cfb = new CircularFrameBuffer(1);
+
         public void eth_parser()
         {
-            var p = new EthernetParser();
+            var p = new EthernetParserGenerator();
             while (true)
             {
                 CircularNetworkFunctions.RecvOne(cfb, true);
@@ -78,32 +106,32 @@ class EmuReferenceSwitchThreads : Emu
     {
         // Memory to store the Output queue of a particular src_mac
         // Each entry is associated with an entry into the CAM
-        static ulong[] LUT = new ulong[LUT_SIZE];
+        private static readonly ulong[] LUT = new ulong[LUT_SIZE];
 
-        static uint mem_controller_cnt = 0U;
-        static ulong dst_mac = 0UL;
-        static ulong src_mac = 0UL;
-        static ulong metadata = 0UL;
-        static ulong broadcast_ports = 0UL;
-        static ulong tmp_dst_ports = 0UL;
+        private static uint mem_controller_cnt;
+        private static ulong dst_mac;
+        private static ulong src_mac;
+        private static ulong metadata;
+        private static ulong broadcast_ports;
+        private static ulong tmp_dst_ports = 0UL;
 
         public void CAM_lookup_n_learn()
         {
             byte tmp_addr = 0x00;
 
-            CAM_controller.mem_controller_cnt = 0U;
+            mem_controller_cnt = 0U;
 
             while (true)
             {
                 // Trigger this logic whenever the ethernet class is done
                 if (eth_header_rdy)
                 {
-                    CAM_controller.dst_mac = dst_mac;
-                    CAM_controller.src_mac = src_mac << 16;
-                    CAM_controller.metadata = metadata;
-                    CAM_controller.broadcast_ports = broadcast_ports;
+                    dst_mac = dst_mac;
+                    src_mac = src_mac << 16;
+                    metadata = metadata;
+                    broadcast_ports = broadcast_ports;
 
-                    
+
                     cam_din = cam_din_learn = 0xFFFFFFFFFFFFFFFF;
                     cam_we = cam_we_learn = false;
 
@@ -117,45 +145,46 @@ class EmuReferenceSwitchThreads : Emu
                     //	Check if we have the dst_mac in the CAM and retrieve the destination port number
                     //	otherwise broadcast
                     if (cam_match)
-                        fifo.push((LUT[(byte) cam_match_addr] | CAM_controller.metadata));
+                        fifo.push(LUT[cam_match_addr] | metadata);
                     else
-                        fifo.push((ulong) (CAM_controller.broadcast_ports | CAM_controller.metadata));
+                        fifo.push(broadcast_ports | metadata);
 
                     if (!cam_match_learn)
                     {
                         cam_we = true;
-                        cam_din = CAM_controller.src_mac;
+                        cam_din = src_mac;
                         cam_wr_addr = (byte) mem_controller_cnt;
 
                         cam_we_learn = true;
-                        cam_din_learn = CAM_controller.src_mac;
+                        cam_din_learn = src_mac;
                         cam_wr_addr_learn = (byte) mem_controller_cnt;
 
                         // Update the LUT with the src port
-                        tmp_addr = (byte) CAM_controller.mem_controller_cnt;
-                        LUT[(byte) CAM_controller.mem_controller_cnt] =
-                            (CAM_controller.metadata & (ulong) 0x00FF0000) << 8;
+                        tmp_addr = (byte) mem_controller_cnt;
+                        LUT[(byte) mem_controller_cnt] =
+                            (metadata & 0x00FF0000) << 8;
 
-                        if (CAM_controller.mem_controller_cnt == (uint) (LUT_SIZE - 1U))
-                            CAM_controller.mem_controller_cnt = 0U;
+                        if (mem_controller_cnt == LUT_SIZE - 1U)
+                            mem_controller_cnt = 0U;
                         else
-                            CAM_controller.mem_controller_cnt += 1U;
+                            mem_controller_cnt += 1U;
                     }
                     else
                     {
                         cam_din = cam_din_learn = 0xFFFFFFFFFFFFFFFF;
                         cam_we = cam_we_learn = false;
-                        tmp_addr = (byte) cam_match_addr_learn;
+                        tmp_addr = cam_match_addr_learn;
                     }
                 }
                 else
                 {
-                    cam_cmp_din = s_axis_tdata_0 << (byte) 16; //Emu.dst_mac;
-                    cam_cmp_din_learn = (((s_axis_tdata_0 >> (byte) 48) & (ulong) 0x00ffff) |
-                                         (s_axis_tdata_1 & (ulong) 0x00ffffffff) << (byte) 16) << 16;
+                    cam_cmp_din = s_axis_tdata_0 << 16; //Emu.dst_mac;
+                    cam_cmp_din_learn = (((s_axis_tdata_0 >> 48) & 0x00ffff) |
+                                         ((s_axis_tdata_1 & 0x00ffffffff) << 16)) << 16;
                     cam_din = cam_din_learn = 0xFFFFFFFFFFFFFFFF;
                     cam_we = cam_we_learn = false;
                 }
+
                 Kiwi.Pause();
             }
         }
@@ -209,6 +238,7 @@ class EmuReferenceSwitchThreads : Emu
                         {
                             m_axis_tvalid = false;
                         }
+
                         break;
                     // SEND_STATE
                     case 0x01:
@@ -218,44 +248,16 @@ class EmuReferenceSwitchThreads : Emu
                             state = 0x00;
                             m_axis_tvalid = !fifo_empty & !fifo.canPop();
                         }
+
                         break;
 
                     default:
                         break;
                 }
+
                 Kiwi.Pause();
             }
         }
-    }
-
-    // #############################
-    // # Main Hardware Enrty point
-    // #############################
-    [Kiwi.HardwareEntryPoint()]
-    static int EntryPoint()
-    {
-        // Create and start the thread for the CAM controller
-        CAM_controller cam_controller = new CAM_controller();
-        Thread CAM_lookup_n_learn = new Thread(new ThreadStart(cam_controller.CAM_lookup_n_learn));
-        CAM_lookup_n_learn.Start();
-
-        // Create and start the thread for the ethernet parser
-        Ethernet eth_controller = new Ethernet();
-        Thread eth_ctrl = new Thread(new ThreadStart(eth_controller.eth_parser));
-        eth_ctrl.Start();
-
-        // Create and start the thread for the FIFO controller
-        FIFO_controller fifo_controller = new FIFO_controller();
-//		Thread FIFO_receive = new Thread(new ThreadStart(fifo_controller.FIFO_receive));
-//		FIFO_receive.Start();
-        Thread FIFO_send = new Thread(new ThreadStart(fifo_controller.FIFO_send));
-        FIFO_send.Start();
-        while (true)
-        {
-            Kiwi.Pause();
-        }
-        ;
-        return 0;
     }
 
     //static int Main()

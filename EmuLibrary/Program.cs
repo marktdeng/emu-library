@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-
-namespace EmuLibrary
+﻿namespace EmuLibrary
 {
     internal class Program
     {

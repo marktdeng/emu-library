@@ -1,226 +1,416 @@
-//	Reference learning Switch lite of the NetFPGA infrastructure
-//	This program (C#) replicates the functionality and the logic of
-//	the OPL module (verilog) of the reference datapath
-//	It is supposed to be used with the kiwi compiler and for 
-//	within the NetFPGA project
+//	Emu packet packet parsing library
 //
-//	Copyright 2016	Salvator Galea	<salvator.galea@cl.cam.ac.uk>
+//	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
 //	All rights reserved
 //
 //	This software was developed by the University of Cambridge,
-//	Computer Laboratory under EPSRC NaaS Project EP/K034723/1 
+//	Computer Laboratory 
 //
 //	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
-//
-//	TODO:
-//	 -need to take care of the tlast signal for the last receiving frame
-//	  not all the bytes are valid data
-//
-//	Latest working set-up:
-//		-Vivado 2014.4
-//		-KiwiC Version Alpha 0.3.1x
-//
 
 using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using KiwiSystem;
 
 namespace EmuLibrary
 {
-    public class EthernetParser
+    public class EthernetParserGenerator
     {
-        public ulong Metadata;
-        public ulong DestMac;
-        public ulong SrcMac;
-        public bool EthHeaderRdy;
+        public const ushort ETHERTYPE_IPV4 = 0x0008;
+        public const ushort ETHERTYPE_IPV6 = 0xdd86;
         public ulong BroadcastPorts;
+        public ulong DestMac;
+        public uint Ethertype;
+        public bool EthHeaderRdy;
         public bool IsIPv4;
         public bool IsIPv6;
-        public uint Ethertype;
-
-        /*
-        public bool RecvAndParseEthHeader()
-        {
-            switch (_state)
-            {
-                case 0x00:
-                    if(Emu.s_axis_tvalid & Emu.s_axis_tready)
-                    {
-                        Metadata = Emu.s_axis_tuser_low;
-                        DestMac = Emu.s_axis_tdata_0<<(byte)16;
-                        SrcMac = ((Emu.s_axis_tdata_0>>(byte)48) & (ulong)0x00ffff) | (Emu.s_axis_tdata_1 & (ulong)0x00ffffffff )<<(byte)16 ;
-                        EthHeaderRdy = true;
-                        BroadcastPorts = ( (Emu.s_axis_tuser_low & (ulong)0x00FF0000) ^ Emu.DEFAULT_oqs) >> (byte)16;
-                        _state		= 0x01;
-                    }
-                    Emu.s_axis_tready	= true;
-                    break;
-                // WAIT FOR EOP
-                case 0x01:
-                    EthHeaderRdy = false; 
-                    _state = (Emu.s_axis_tvalid & Emu.s_axis_tlast & Emu.s_axis_tready) ? (byte)0x00 : (byte)0x01;
-                    Emu.s_axis_tready = !(Emu.s_axis_tvalid & Emu.s_axis_tlast);
-                    break;
-                default:
-                    break;
-            }
-            return Emu.s_axis_tready;
-        }
-        */
-
-        /*
-        public void ParseEthernetBufferHeader(FrameBuffer buffer)
-        {
-            Metadata = buffer.tuser_low[0U];
-            DestMac = buffer.tdata_0[0U] << (byte) 16;
-            SrcMac = (buffer.tdata_0[0U] >> (byte) 48) & (ulong) 0x00ffff | (buffer.tdata_1[0U] & (ulong)0x00ffffffff )<<(byte)16;
-            BroadcastPorts = ((buffer.tuser_low[0U] & (ulong)0x00FF0000) ^ Emu.DEFAULT_oqs)<<(byte)8;
-            IsIPv4 = (buffer.tdata_1[0U] >> 32 & (ulong) 0x00ffff) == (ulong) 0x0008;
-        }
-        */
+        public ulong Metadata;
+        public ulong SrcMac;
 
         public int Parse(CircularFrameBuffer cfb)
         {
-            while (!cfb.CanAdvance())
-            {
-                return 2;
-            }
+            while (!cfb.CanAdvance()) return 2;
+
             cfb.AdvancePeek();
-            lock (cfb.PeekData)
+            var be = cfb.PeekData;
+            lock (be)
             {
-                Metadata = cfb.PeekData.TuserLow;
-                DestMac = cfb.PeekData.Tdata0 & 0xffffffffffff;
-                SrcMac = (cfb.PeekData.Tdata0 >> (byte) 48) & (ulong) 0x00ffff |
-                         (cfb.PeekData.Tdata1 & (ulong) 0x00ffffffff) << (byte) 16;
-                BroadcastPorts = ((cfb.PeekData.TuserLow & (ulong) 0x00FF0000) ^ Emu.DEFAULT_oqs) << (byte) 8;
-                Ethertype = (uint) (cfb.PeekData.Tdata1 >> 32 & (ulong) 0x00ffff);
-                IsIPv4 = (cfb.PeekData.Tdata1 >> 32 & (ulong) 0x00ffff) == (ulong) 0x0008 &&
-                         (cfb.PeekData.Tdata1 >> 52 & (ulong) 0x0f) == (ulong) 0x04;
-                IsIPv6 = (cfb.PeekData.Tdata1 >> 32 & (ulong) 0x00ffff) == (ulong) 0xdd86 &&
-                         (cfb.PeekData.Tdata1 >> 52 & (ulong) 0x0f) == (ulong) 0x06;
+                Metadata = be.TuserLow;
+                DestMac = be.Tdata0 & 0xffffffffffff;
+                SrcMac = ((be.Tdata0 >> 48) & 0x00ffff) |
+                         ((be.Tdata1 & 0x00ffffffff) << 16);
+                BroadcastPorts = ((be.TuserLow & 0x00FF0000) ^ Emu.DEFAULT_oqs) << 8;
+                Ethertype = (uint) ((be.Tdata1 >> 32) & 0x00ffff);
+                IsIPv4 = ((be.Tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV4 &&
+                         ((be.Tdata1 >> 52) & 0x0f) == 0x04;
+                IsIPv6 = ((be.Tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV6 &&
+                         ((be.Tdata1 >> 52) & 0x0f) == 0x06;
             }
+
             return 0;
+        }
+        
+        public void PushHeader(CircularFrameBuffer cfb)
+        {
+            WriteToBuffer(cfb.PushData);
+
+            cfb.Push(cfb.PushData);
+        }
+
+        public static void PushHeader(CircularFrameBuffer cfb, ulong destMac, ulong srcMac, uint ethertype,
+            ulong metadata)
+        {
+            WriteToBuffer(cfb.PushData, destMac, srcMac, ethertype, metadata);
+
+            cfb.Push(cfb.PushData);
+        }
+
+        public void UpdateHeader(CircularFrameBuffer cfb)
+        {
+            UpdateHeader(cfb, DestMac, SrcMac, Ethertype, Metadata);
+        }
+               
+        public void UpdateHeader(CircularFrameBuffer cfb, ulong destMac, ulong srcMac, uint ethertype,
+            ulong metadata)
+        {
+            cfb.RewindPeek();
+            var be = cfb.PeekData;
+            WriteToBuffer(be, destMac, srcMac, ethertype, metadata);
+
+            cfb.UpdatePeek(be);
+        }
+
+        public void WriteToBuffer(CircularFrameBuffer.BufferEntry be)
+        {
+            WriteToBuffer(be, DestMac, SrcMac, Ethertype, Metadata);
+        }
+
+        public static void WriteToBuffer(CircularFrameBuffer.BufferEntry be, ulong destMac, ulong srcMac,
+            uint ethertype, ulong metadata)
+        {
+            be.Tdata0 = destMac | (srcMac << 48);
+            be.Tdata1 = (srcMac >> 16) | ((ulong) ethertype << 32);
+            be.TuserLow = metadata;
         }
     }
 
-    public class IPv4Parser
+    public class IPv4ParserGenerator
     {
-        public byte Version;
-        public byte IHL;
+        private ulong _tmp_dest_ip;
+
+        private ulong data_0;
+        private ulong data_1;
+        private ulong data_2;
+        private ulong data_3;
+        public ulong DestIp;
         public byte DSCP;
         public byte ECN;
-        public byte Protocol;
-        public uint TotalLength;
-        public uint Identification;
         public byte Flags;
         public uint FragmentOffset;
-        public byte TTL;
         public uint HeaderChecksum;
+        public uint Identification;
+        public byte IHL;
+        public byte Protocol;
         public ulong SrcIp;
-        private ulong _tmp_dest_ip;
-        public ulong DstIp;
+        public uint TotalLength;
+        public byte TTL;
+        public byte Version;
 
-        public byte Parse(CircularFrameBuffer cfb, bool skip = false)
+        public byte Rearrange(CircularFrameBuffer cfb, bool skip = false)
         {
-            if (!skip)
+            var be = cfb.PeekData;
+
+            lock (be)
             {
-                lock (cfb.PeekData)
+                IHL = (byte) ((be.Tdata1 >> 48) & 0x0f);
+
+                data_0 = be.Tdata1 >> 48;
+                data_0 |= be.Tdata2 << 16;
+                data_1 = be.Tdata2 >> 48;
+                data_1 |= be.Tdata3 << 16;
+                data_2 = be.Tdata3 >> 48;
+
+
+                if (!cfb.CanAdvance()) return 2;
+
+                cfb.AdvancePeek();
+
+
+                if (IHL == 5)
                 {
-                    Version = (byte) (cfb.PeekData.Tdata1 >> 52 & 0x0f);
-                    IHL = (byte) (cfb.PeekData.Tdata1 >> 48 & 0x0f);
-                    DSCP = (byte) (cfb.PeekData.Tdata1 >> 58 & 0x3F);
-                    ECN = (byte) (cfb.PeekData.Tdata1 >> 56 & 0x3);
-                    TotalLength = (uint) (cfb.PeekData.Tdata2 & 0x00ffff);
-                    Identification = (uint) (cfb.PeekData.Tdata2 >> 16 & 0x00ffff);
-                    Flags = (byte) (cfb.PeekData.Tdata2 >> 37 & 0x07);
-                    FragmentOffset = (uint) ((cfb.PeekData.Tdata2 >> 32 & 0x01f) << 8 |
-                                             cfb.PeekData.Tdata2 >> 40 & 0x0ff);
-                    TTL = (byte) (cfb.PeekData.Tdata2 >> 48 & 0x00ff);
-                    Protocol = (byte) (cfb.PeekData.Tdata2 >> 56 & 0x00ff);
-                    HeaderChecksum = (uint) cfb.PeekData.Tdata3 & 0x00ffff;
-                    SrcIp = (cfb.PeekData.Tdata3 >> 16) & (ulong) 0x00ffffffff;
-                    _tmp_dest_ip = (cfb.PeekData.Tdata3 >> 48) & (ulong) 0x00ffff;
+                    data_2 |= (be.Tdata0 & 0xffff) << 16;
+                }
+                else
+                {
+                    data_2 |= be.Tdata0 << 16;
+                    if (IHL == 7)
+                    {
+                        data_3 = be.Tdata0 >> 48;
+                        data_3 |= (be.Tdata1 & 0xffff) << 16;
+                    }
+                    else if (IHL == 8)
+                    {
+                        data_3 = be.Tdata0 >> 48;
+                        data_3 |= be.Tdata1 << 16;
+                    }
                 }
             }
 
-            if (!cfb.CanAdvance())
-            {
-                return 2;
-            }
-            cfb.AdvancePeek();
+            return 0;
+        }
 
+        public void ParseArranged()
+        {
+            Version = (byte) ((data_0 >> 4) & 0x0f);
+            IHL = (byte) (data_0 & 0x0f);
+            DSCP = (byte) ((data_0 >> 10) & 0x3F);
+            ECN = (byte) ((data_0 >> 8) & 0x3);
+            TotalLength = (uint) ((data_0 >> 16) & 0x00ffff);
+            Identification = (uint) ((data_0 >> 32) & 0x00ffff);
+            Flags = (byte) ((data_0 >> 53) & 0x07);
+            FragmentOffset = (uint) (((data_0 >> 48) & 0x01f) | ((data_0 >> 56) & 0x0ff)) << 8;
+            TTL = (byte) (data_1 & 0x00ff);
+            Protocol = (byte) ((data_1 >> 8) & 0x00ff);
+            HeaderChecksum = ((uint) data_1 >> 16) & 0x00ffff;
+            SrcIp = (data_1 >> 32) & 0x00ffffffff;
+            DestIp = data_2 & 0x00ffffffff;
+        }
+
+        public void AssembleHeader()
+        {
+            data_0 = IHL | ((ulong) Version << 4) | ((ulong) DSCP << 10) | ((ulong) ECN << 8) |
+                     ((ulong) TotalLength << 16) | ((ulong) Identification << 32) | ((ulong) Flags << 53) |
+                     ((ulong) FragmentOffset << 48);
+
+            data_1 = TTL | ((ulong) Protocol << 8) | ((ulong) HeaderChecksum << 16) | (SrcIp << 32);
+
+            data_2 = DestIp;
+        }
+
+        public void WriteHeader(CircularFrameBuffer cfb, bool push, bool assembled = false)
+        {
+            if (!assembled) AssembleHeader();
+
+            cfb.RewindPeek();
+            var be = cfb.PeekData;
+            lock (be)
+            {
+                be.Tdata1 = (be.Tdata1 & 0x0000ffffffffffff) | (data_0 << 48);
+                be.Tdata2 = (data_0 >> 16) | (data_1 << 48);
+                be.Tdata3 = (data_1 >> 16) | (data_2 << 48);
+
+                cfb.UpdatePeek(be);
+
+                if (!push) cfb.AdvancePeek();
+
+                if (IHL == 5)
+                {
+                    be.Tdata0 = (be.Tdata0 & 0xffffffffffff0000) | (data_2 >> 16);
+                }
+                else if (IHL == 6)
+                {
+                    be.Tdata0 = (be.Tdata0 & 0xffff000000000000) | (data_2 >> 16);
+                }
+                else if (IHL == 7)
+                {
+                    be.Tdata0 = (data_2 >> 16) | (data_3 << 48);
+                    be.Tdata1 = (be.Tdata1 & 0xffffffffffff0000) | (data_3 >> 16);
+                }
+                else if (IHL == 8)
+                {
+                    be.Tdata0 = (data_2 >> 16) | (data_3 << 48);
+                    be.Tdata1 = (be.Tdata1 & 0xffff000000000000) | (data_3 >> 16);
+                }
+            }
+        }
+
+        public void WriteToBuffer(CircularFrameBuffer.BufferEntry be, uint part)
+        {
+            if (part == 0)
+            {
+                be.Tdata1 = (be.Tdata1 & 0x0000ffffffffffff) | (data_0 << 48);
+                be.Tdata2 = (data_0 >> 16) | (data_1 << 48);
+                be.Tdata3 = (data_1 >> 16) | (data_2 << 48);
+            }
+            else if (part == 1)
+            {
+                if (IHL == 5)
+                {
+                    be.Tdata0 = (be.Tdata0 & ~(ulong) 0xffff) | (data_2 >> 16);
+                }
+                else if (IHL == 6)
+                {
+                    be.Tdata0 = (be.Tdata0 & 0xffff000000000000) | (data_2 >> 16);
+                }
+                else if (IHL == 7)
+                {
+                    be.Tdata0 = (data_2 >> 16) | (data_3 << 48);
+                    be.Tdata1 = (be.Tdata1 & 0xffffffffffff0000) | (data_3 >> 16);
+                }
+                else if (IHL == 8)
+                {
+                    be.Tdata0 = (data_2 >> 16) | (data_3 << 48);
+                    be.Tdata1 = (be.Tdata1 & 0xffff000000000000) | (data_3 >> 16);
+                }
+            }
+        }
+
+
+        public byte Parse(CircularFrameBuffer cfb, bool skip = false)
+        {
+            var result = Rearrange(cfb, skip);
+            ParseArranged();
+            return result;
+        }
+
+        public byte ParseSplit(CircularFrameBuffer cfb, bool skip = false)
+        {
             lock (cfb.PeekData)
             {
-                DstIp = _tmp_dest_ip | (cfb.PeekData.Tdata0 & (ulong) 0x00ffff) << 16;
+                var be = cfb.PeekData;
+
+                if (!skip)
+                {
+                    data_0 = be.Tdata1 >> 48;
+                    data_0 |= be.Tdata2 << 16;
+                    data_1 = be.Tdata2 >> 48;
+                    data_1 |= be.Tdata3 << 16;
+                    data_2 = be.Tdata3 >> 48;
+
+                    Version = (byte) ((be.Tdata1 >> 52) & 0x0f);
+                    if (Version != 4) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                    IHL = (byte) ((be.Tdata1 >> 48) & 0x0f);
+                    if (IHL < 5 || IHL > 8) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                    DSCP = (byte) ((be.Tdata1 >> 58) & 0x3F);
+                    ECN = (byte) ((be.Tdata1 >> 56) & 0x3);
+                    TotalLength = (uint) (be.Tdata2 & 0x00ffff);
+                    Identification = (uint) ((be.Tdata2 >> 16) & 0x00ffff);
+                    Flags = (byte) ((be.Tdata2 >> 37) & 0x07);
+                    FragmentOffset = (uint) ((((be.Tdata2 >> 32) & 0x01f) << 8) |
+                                             ((be.Tdata2 >> 40) & 0x0ff));
+                    TTL = (byte) ((be.Tdata2 >> 48) & 0x00ff);
+                    Protocol = (byte) ((be.Tdata2 >> 56) & 0x00ff);
+                    HeaderChecksum = (uint) be.Tdata3 & 0x00ffff;
+                    SrcIp = (be.Tdata3 >> 16) & 0x00ffffffff;
+                    _tmp_dest_ip = (be.Tdata3 >> 48) & 0x00ffff;
+                }
+
+
+                if (!cfb.CanAdvance()) return 2;
+
+                cfb.AdvancePeek();
+
+                if (IHL == 5)
+                {
+                    data_2 |= (be.Tdata0 & 0xffff) << 16;
+                }
+                else if (IHL == 6)
+                {
+                    data_2 |= be.Tdata0 << 16;
+                    if (IHL == 7)
+                    {
+                        data_3 = be.Tdata0 >> 48;
+                        data_3 |= (be.Tdata1 & 0xffff) << 16;
+                    }
+                    else if (IHL == 8)
+                    {
+                        data_3 = be.Tdata0 >> 48;
+                        data_3 |= be.Tdata1 << 16;
+                    }
+                }
+
+                DestIp = _tmp_dest_ip | ((be.Tdata0 & 0x00ffff) << 16);
             }
+
             return 0;
+        }
+
+
+        public ushort CalculateCheckSum(bool includeHeader = false)
+        {
+            uint result = 0;
+            for (var i = 0; i < 4; i++)
+            {
+                result += (ushort) (data_0 >> (i * 16));
+
+                if (includeHeader || i == 1) result += (ushort) (data_1 >> (i * 16));
+
+                result += (ushort) (data_2 >> (i * 16));
+                result += (ushort) (data_3 >> (i * 16));
+            }
+
+            while (result > 0xffff) result = (result & 0xffff) + ((result >> 16) & 0xffff);
+
+            return (ushort) (result ^ 0xffff);
+        }
+
+        public bool VerifyCheckSum()
+        {
+            return CalculateCheckSum(true) == 0x0000;
         }
     }
 
     public class IPv6Parser
     {
-        public byte Version;
-        public byte TrafficClass;
-        public uint PayloadLength;
-        public byte Protocol;
-        public byte HopLimit;
-        public ulong SrcIp1;
         private ulong _tmp_src_ip_2;
-        public ulong SrcIp2;
         public ulong DestIp1;
         public ulong DestIp2;
+        public byte HopLimit;
+        public uint PayloadLength;
+        public byte Protocol;
+        public ulong SrcIp1;
+        public ulong SrcIp2;
+        public byte TrafficClass;
+        public byte Version;
+
 
         public byte Parse(CircularFrameBuffer cfb, bool skip = false)
         {
             if (!skip)
-            {
                 lock (cfb.PeekData)
                 {
-                    Version = (byte) (cfb.PeekData.Tdata1 >> 52 & 0x0f);
+                    var be = cfb.PeekData;
+                    Version = (byte) ((be.Tdata1 >> 52) & 0x0f);
                     TrafficClass =
-                        (byte) ((cfb.PeekData.Tdata1 >> 48 & 0x0f) | ((cfb.PeekData.Tdata1 >> 56 & 0x0f) << 4));
+                        (byte) (((be.Tdata1 >> 48) & 0x0f) | (((be.Tdata1 >> 56) & 0x0f) << 4));
 
-                    PayloadLength = (uint) (cfb.PeekData.Tdata2 >> 16 & (ulong) 0x00ffff);
-                    Protocol = (byte) (cfb.PeekData.Tdata2 >> 32 & (ulong) 0x00ff);
-                    HopLimit = (byte) (cfb.PeekData.Tdata2 >> 40 & (ulong) 0x00ff);
+                    PayloadLength = (uint) ((be.Tdata2 >> 16) & 0x00ffff);
+                    Protocol = (byte) ((be.Tdata2 >> 32) & 0x00ff);
+                    HopLimit = (byte) ((be.Tdata2 >> 40) & 0x00ff);
 
-                    SrcIp1 = (cfb.PeekData.Tdata2 >> 48) & (ulong) 0x00ffff;
-                    SrcIp1 |= (cfb.PeekData.Tdata3 & 0x00ffffffffffff) << 16;
-                    _tmp_src_ip_2 = (cfb.PeekData.Tdata3 >> 48) & (ulong) 0x00ffff;
+                    SrcIp1 = (be.Tdata2 >> 48) & 0x00ffff;
+                    SrcIp1 |= (be.Tdata3 & 0x00ffffffffffff) << 16;
+                    _tmp_src_ip_2 = (be.Tdata3 >> 48) & 0x00ffff;
                 }
-            }
 
-            if (!cfb.CanAdvance())
-            {
-                return 2;
-            }
+            if (!cfb.CanAdvance()) return 2;
+
             cfb.AdvancePeek();
 
             lock (cfb.PeekData)
             {
-                SrcIp2 = _tmp_src_ip_2 | (cfb.PeekData.Tdata0 & (ulong) 0x00ffffffffffff) << 16;
-                DestIp1 = (cfb.PeekData.Tdata0 >> 48) & (ulong) 0x00ffff;
-                DestIp1 |= (cfb.PeekData.Tdata1 & 0x00ffffffffffff) << 16;
-                DestIp2 = (cfb.PeekData.Tdata1 >> 48) & (ulong) 0x00ffff;
-                DestIp2 |= (cfb.PeekData.Tdata2 & 0x00ffffffffffff) << 16;
+                var be = cfb.PeekData;
+                SrcIp2 = _tmp_src_ip_2 | ((be.Tdata0 & 0x00ffffffffffff) << 16);
+                DestIp1 = (be.Tdata0 >> 48) & 0x00ffff;
+                DestIp1 |= (be.Tdata1 & 0x00ffffffffffff) << 16;
+                DestIp2 = (be.Tdata1 >> 48) & 0x00ffff;
+                DestIp2 |= (be.Tdata2 & 0x00ffffffffffff) << 16;
             }
+
             return 0;
         }
     }
-    
+
     public class UDPParser
     {
-        public uint SrcPort;
+        public uint Checksum;
         public uint DestPort;
         public uint Length;
-        public uint Checksum;
+        public uint SrcPort;
 
         public byte Parse(CircularFrameBuffer cfb, uint ipHeaderLength, bool skip = false)
         {
-            uint startloc = (1 + (ipHeaderLength / 64)) - 4;
-            int offset = (int) (48 + (ipHeaderLength % 64));
+            var startloc = 1 + ipHeaderLength / 64 - 4;
+            var offset = (int) (48 + ipHeaderLength % 64);
             if (offset >= 64)
             {
                 offset -= 64;
@@ -300,18 +490,97 @@ namespace EmuLibrary
 
             return 0;
         }
+
+
+        //TODO
+        public byte WriteToBuffer(CircularFrameBuffer.BufferEntry be, byte offset)
+        {
+            for (byte dataitem = 0; dataitem < 4; dataitem++)
+            {
+                Console.WriteLine("OFFSET:" + offset);
+
+                ulong data;
+                if (dataitem > 3) return 0;
+
+                switch (dataitem)
+                {
+                    case 0:
+                        data = SrcPort;
+                        break;
+                    case 1:
+                        data = DestPort;
+                        break;
+                    case 2:
+                        data = Length;
+                        break;
+                    case 3:
+                        data = Checksum;
+                        break;
+                    default:
+                        return 1;
+                }
+
+                var linenum = offset / 64;
+                var lineoffset = offset % 64;
+                Console.WriteLine("DATA:" + (data << lineoffset).ToString("X16"));
+                if (lineoffset % 8 != 0) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+
+                if (lineoffset <= 48)
+                    switch (linenum)
+                    {
+                        case 0:
+                            be.Tdata0 = (be.Tdata0 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            break;
+                        case 1:
+                            be.Tdata1 = (be.Tdata1 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            break;
+                        case 2:
+                            be.Tdata2 = (be.Tdata2 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            break;
+                        case 3:
+                            be.Tdata3 = (be.Tdata3 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            break;
+                    }
+                else
+                    switch (linenum)
+                    {
+                        case 0:
+                            be.Tdata0 = (be.Tdata0 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            be.Tdata1 = (be.Tdata1 & ~((ulong) 0xffff >> (64 - lineoffset))) |
+                                        (data >> (64 - lineoffset));
+                            break;
+                        case 1:
+                            be.Tdata1 = (be.Tdata1 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            be.Tdata2 = (be.Tdata2 & ~((ulong) 0xffff >> (64 - lineoffset))) |
+                                        (data >> (64 - lineoffset));
+                            break;
+                        case 2:
+                            be.Tdata2 = (be.Tdata2 & ~((ulong) 0xffff << lineoffset)) | (data << lineoffset);
+                            be.Tdata3 = (be.Tdata3 & ~((ulong) 0xffff >> (64 - lineoffset))) |
+                                        (data >> (64 - lineoffset));
+                            break;
+                        case 3:
+                            debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                            break;
+                    }
+
+                offset += 16;
+            }
+
+            return 0;
+        }
     }
 
-    public class TCPParser 
+    public class TCPParser
     {
-        public uint SrcPort;
         public uint DestPort;
         public uint SeqNumber;
+        public uint SrcPort;
 
         public byte Parse(CircularFrameBuffer cfb, uint ipHeaderLength, bool skip = false)
         {
-            uint startloc = (1 + (ipHeaderLength / 64)) - 4;
-            int offset = (int) (48 + (ipHeaderLength % 64));
+            var startloc = 1 + ipHeaderLength / 64 - 4;
+            var offset = (int) (48 + ipHeaderLength % 64);
             if (offset >= 64)
             {
                 offset -= 64;
@@ -367,131 +636,5 @@ namespace EmuLibrary
         }
     }
 
-    public class HeaderParse
-    {
-        private bool _ethParsed = false;
-        private bool _ipParsed1 = false;
-        private bool _ipParsed2 = false;
-        public byte IpVersion = 0;
-        private bool _transportParsed = false;
-        public byte Protocol = 0;
-
-        private uint _ipHeaderLength = 0;
-
-        public EthernetParser ep = new EthernetParser();
-        public IPv4Parser ipv4 = new IPv4Parser();
-        public IPv6Parser ipv6 = new IPv6Parser();
-        public UDPParser udp = new UDPParser();
-        public TCPParser tcp = new TCPParser();
-
-        public void Parse(CircularFrameBuffer cfb, bool newFrame)
-        {
-            if (newFrame)
-            {
-                _ethParsed = false;
-                _ipParsed1 = false;
-                _ipParsed2 = false;
-                IpVersion = 0;
-                _transportParsed = false;
-                Protocol = 0;
-            }
-
-            if (!_ethParsed)
-            {
-                if (ep.Parse(cfb) == 0)
-                {
-                    _ethParsed = true;
-                    if (ep.IsIPv4)
-                    {
-                        IpVersion = 4;
-                    }
-                    else if (ep.IsIPv6)
-                    {
-                        IpVersion = 6;
-                    }
-                }
-            }
-
-            switch (IpVersion)
-            {
-                case 4:
-                    if (!_ipParsed1)
-                    {
-                        _ipParsed1 = true;
-                        if (ipv4.Parse(cfb, false) == 0) _ipParsed2 = true;
-                    }
-                    else if (!_ipParsed2)
-                    {
-                        if (ipv4.Parse(cfb, true) == 0) _ipParsed2 = true;
-                    }
-                    _ipHeaderLength = ipv4.IHL * 4U * 8U;
-
-                    if (_ipParsed2) Protocol = ipv4.Protocol;
-
-
-                    break;
-                case 6:
-                    if (!_ipParsed1)
-                    {
-                        _ipParsed1 = true;
-                        if (ipv6.Parse(cfb, false) == 0) _ipParsed2 = true;
-                    }
-                    else if (!_ipParsed2)
-                    {
-                        if (ipv6.Parse(cfb, true) == 0) _ipParsed2 = true;
-                    }
-                    _ipHeaderLength = 320U;
-
-                    if (_ipParsed2) Protocol = ipv6.Protocol;
-                    break;
-                default:
-                    return;
-            }
-
-            switch (Protocol)
-            {
-                case 6:
-                    tcp.Parse(cfb,_ipHeaderLength);
-                    break;
-                case 17:
-                    udp.Parse(cfb,_ipHeaderLength);
-                    break;
-                default:
-                    return;
-            }
-        }
-    }
-
-    public class PacketGen
-    {
-        public void WriteEthHeader(CircularFrameBuffer cfb, EthernetParser ep)
-        {
-            WriteEthHeader(cfb, ep.DestMac, ep.SrcMac, ep.Ethertype);
-        }
-
-        public void WriteEthHeader(CircularFrameBuffer cfb, ulong destMac, ulong srcMac, uint ethertype)
-        {
-            ulong data0, data1, data2, data3;
-
-            data0 = destMac | srcMac << (byte) 48;
-            data1 = srcMac >> 16 | ethertype << 32;
-            
-            
-        }
-
-        public void WriteIPv4Header(CircularFrameBuffer cfb, IPv4Parser ip)
-        {
-            ulong data1 = 0, data2, data3, data0_nxt;
-
-            data1 |= (ulong) (ip.Version) << 52 | (ulong) (ip.IHL) << 48 | (ulong) (ip.DSCP) << 58 | (ulong) (ip.ECN) << 56;
-
-            data2 = ip.TotalLength | ip.Identification << 16 | (ulong) (ip.Flags << 37) | (ip.FragmentOffset >> 8) << 32 | (ip.FragmentOffset & 0x00ff) << 40;
-
-            data3 = ip.HeaderChecksum | ip.SrcIp << 16 | ip.DstIp << 48;
-
-            data0_nxt = ip.DstIp >> 16;
-        }
-        
-        
-    }
+    
 }

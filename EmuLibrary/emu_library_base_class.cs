@@ -107,8 +107,8 @@ namespace EmuLibrary
 
         // Output Ports
         [Kiwi.OutputWordPort("cam_cmp_din_learn")] // cam_cmp_din
-        protected internal static ulong cam_cmp_din_learn = ~(ulong) 0x00
-            ; // Data to compare against the content of the CAM
+        protected internal static ulong
+            cam_cmp_din_learn = ~(ulong) 0x00; // Data to compare against the content of the CAM
 
         [Kiwi.OutputWordPort("cam_din_learn")] // cam_din
         protected internal static ulong cam_din_learn = 0x00; // Data to be writen in the CAM
@@ -128,23 +128,23 @@ namespace EmuLibrary
 
         [Kiwi.OutputBitPort("fifo_rd_en")] // fifo_rd_we
         protected internal static bool fifo_rd_en = false; // Read enable signal
-        
+
         [Kiwi.OutputBitPort("fifo_dout")] // fifo_rd_we
         protected internal static ulong fifo_dout = 0x00;
 
         [Kiwi.InputBitPort("fifo_full")] // fifo_full
-        protected internal static bool fifo_full; 
+        protected internal static bool fifo_full;
 
         [Kiwi.InputBitPort("fifo_empty")] // fifo_empty
-        protected internal static bool fifo_empty; 
-        
+        protected internal static bool fifo_empty;
+
         // AXI Master Ports
         [Kiwi.OutputBitPort("axi_m_axis_tvalid")] // m_axis_tready
         protected internal static bool axi_m_axis_tvalid; // Ready to receive data - indicator
-        
+
         [Kiwi.InputBitPort("axi_m_axis_tready")] // m_axis_tready
         protected internal static bool axi_m_axis_tready; // Ready to receive data - indicator
-        
+
         [Kiwi.OutputBitPort("axi_m_axis_tdata_0")] // m_axis_tdata
         protected internal static ulong axi_m_axis_tdata_0; // Data to be received
 
@@ -159,7 +159,7 @@ namespace EmuLibrary
 
         [Kiwi.OutputBitPort("axi_m_axis_tstrb")] // m_axis_tkeep
         protected internal static uint axi_m_axis_tstrb; // Offset of valid bytes in the data bus
-        
+
         [Kiwi.OutputBitPort("axi_m_axis_tkeep")] // m_axis_tkeep
         protected internal static uint axi_m_axis_tkeep; // Offset of valid bytes in the data bus
 
@@ -174,17 +174,17 @@ namespace EmuLibrary
 
         [Kiwi.OutputWordPort("axi_m_axis_tuser_0")] // m_axis_tuser_low
         protected internal static ulong axi_m_axis_tuser_0; // metadata
-        
+
         [Kiwi.OutputWordPort("axi_m_axis_tuser_1")] // m_axis_tuser_low
         protected internal static ulong axi_m_axis_tuser_1; // metadata
-        
+
         // AXI Slave Ports
         [Kiwi.InputBitPort("axi_s_axis_tvalid")] // s_axis_tready
         protected internal static bool axi_s_axis_tvalid; // Ready to receive data - indicator
-        
+
         [Kiwi.OutputBitPort("axi_s_axis_tready")] // s_axis_tready
         protected internal static bool axi_s_axis_tready; // Ready to receive data - indicator
-        
+
         [Kiwi.InputWordPort("axi_s_axis_tdata_0")] // s_axis_tdata
         protected internal static ulong axi_s_axis_tdata_0; // Data to be received
 
@@ -199,7 +199,7 @@ namespace EmuLibrary
 
         [Kiwi.InputBitPort("axi_s_axis_tstrb")] // s_axis_tkeep
         protected internal static uint axi_s_axis_tstrb; // Offset of valid bytes in the data bus
-        
+
         [Kiwi.InputBitPort("axi_s_axis_tkeep")] // s_axis_tkeep
         protected internal static uint axi_s_axis_tkeep; // Offset of valid bytes in the data bus
 
@@ -214,27 +214,27 @@ namespace EmuLibrary
 
         [Kiwi.InputWordPort("axi_s_axis_tuser_0")] // s_axis_tuser_low
         protected internal static ulong axi_s_axis_tuser_0; // metadata
-        
+
         [Kiwi.InputWordPort("axi_s_axis_tuser_1")] // s_axis_tuser_low
         protected internal static ulong axi_s_axis_tuser_1; // metadata
 
         // Debug register - Output Port
-        [Kiwi.OutputWordPort("debug_reg")]	// debug_reg
-        protected internal static uint debug_reg=0x00;		// Register for debuging purpose
-        
+        [Kiwi.OutputWordPort("debug_reg")] // debug_reg
+        protected internal static uint debug_reg = 0x00; // Register for debuging purpose
+
         // Registers
         [Kiwi.OutputWordPort("PktIn")]
-        protected internal static uint PktIn=0x00;		// Incoming Packet Counter
-        
+        protected internal static uint PktIn = 0x00; // Incoming Packet Counter
+
         [Kiwi.OutputWordPort("PktOut")]
-        protected internal static uint PktOut=0x00;		// Outgoing Packet Counter
-        
+        protected internal static uint PktOut = 0x00; // Outgoing Packet Counter
+
         [Kiwi.OutputWordPort("Interrupts")]
-        protected internal static ulong Interrupts=0x00;		// Interrupt indicator
-        
+        protected internal static ulong Interrupts = 0x00; // Interrupt indicator
+
         [Kiwi.OutputWordPort("Status")]
-        protected internal static ulong Status=0x00;		// Status indicator
-        
-        protected internal static ulong DEFAULT_oqs = (ulong) 0x0000000000550000;
+        protected internal static ulong Status = 0x00; // Status indicator
+
+        protected internal static ulong DEFAULT_oqs = 0x0000000000550000;
     }
 }

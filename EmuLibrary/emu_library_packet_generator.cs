@@ -1,32 +1,45 @@
-﻿using KiwiSystem;
-
-namespace EmuLibrary
+﻿namespace EmuLibrary
 {
-    public class emu_packet_generator : Emu
+    public class PacketGen
     {
-        const uint BUF_SIZE = 200U; // Max frame size = 1526 Bytes ~ 191x8Bxmd entries
-        
-        static CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
-        
-        static void generate_packet()
+        public void WriteIPv4EthernetHeader(CircularFrameBuffer cfb, EthernetParserGenerator ep, IPv4ParserGenerator ip)
         {
-            
-        }
-        
-        
-        
-        [Kiwi.HardwareEntryPoint()]
-        static int EntryPoint()
-        {
-            while (true)
-            {
-                generate_packet();
-            };
+            ip.AssembleHeader();
+            ep.WriteToBuffer(cfb.PushData);
+            ip.WriteToBuffer(cfb.PushData, 0);
+
+            cfb.Push(cfb.PushData);
+
+            cfb.PushData.Reset();
+
+            ip.WriteToBuffer(cfb.PushData, 1);
+
+            cfb.Push(cfb.PushData);
         }
 
-        static int Main()
+        public void WriteUDPHeader(CircularFrameBuffer cfb, UDPParser up, EthernetParserGenerator ep,
+            IPv4ParserGenerator ip)
         {
-            return 0;
+            ip.Protocol = 17;
+            ip.AssembleHeader();
+            ip.HeaderChecksum = ip.CalculateCheckSum();
+            ip.AssembleHeader();
+            ep.WriteToBuffer(cfb.PushData);
+            ip.WriteToBuffer(cfb.PushData, 0);
+
+            cfb.Push(cfb.PushData);
+
+            cfb.PushData.Reset();
+
+            ip.WriteToBuffer(cfb.PushData, 1);
+
+            up.WriteToBuffer(cfb.PushData, (byte) (16 + (ip.IHL - 5) * 32));
+
+            cfb.Push(cfb.PushData);
+        }
+
+        public void WriteEthernetFCS()
+        {
         }
     }
 }

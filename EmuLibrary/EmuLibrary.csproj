@@ -51,13 +51,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="emu_library_debug_functions.cs" />
+    <Compile Include="emu_library_headerparse.cs" />
     <Compile Include="emu_library_interface_functions.cs" />
     <Compile Include="emu_library_ip_functions.cs" />
     <Compile Include="emu_library_base_class.cs" />
     <Compile Include="emu_library_parsers.cs" />
     <Compile Include="emu_library_network_functions.cs" />
     <Compile Include="emu_library_packet_generator.cs" />
-    <Compile Include="emu_library_packet_types.cs" />
+    <Compile Include="emu_packet_generator.cs" />
     <Compile Include="emu_reference_switch_lite_v2_library.cs" />
     <Compile Include="emu_library_frame_buffer.cs" />
     <Compile Include="emu_reference_switch_threads_library.cs" />

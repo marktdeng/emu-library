@@ -10,8 +10,8 @@ using KiwiSystem;
 
 namespace EmuLibrary
 {
-    public class ip_functions{
-        
+    public class ip_functions
+    {
     }
 
     public class AXI_interface
@@ -21,29 +21,29 @@ namespace EmuLibrary
         public ulong axi_m_axis_tdata_1; // Data to be received
         public ulong axi_m_axis_tdata_2; // Data to be received
         public ulong axi_m_axis_tdata_3; // Data to be received
-        public uint axi_m_axis_tstrb; // Valid Bytes marker
+        public ulong axi_m_axis_tdest; // Routing information
+        public bool axi_m_axis_tid; // Data stream identifier
         public uint axi_m_axis_tkeep; // Offset of valid bytes in the data bus
         public bool axi_m_axis_tlast; // Packet boundary
-        public bool axi_m_axis_tid; // Data stream identifier
-        public ulong axi_m_axis_tdest; // Routing information
+        public uint axi_m_axis_tstrb; // Valid Bytes marker
         public ulong axi_m_axis_tuser_0; // user metadata
         public ulong axi_m_axis_tuser_1; // user metadata
-        public bool m_updated = false;
-        
+
         public ulong axi_s_axis_tdata_0; // Data to be received
         public ulong axi_s_axis_tdata_1; // Data to be received
         public ulong axi_s_axis_tdata_2; // Data to be received
         public ulong axi_s_axis_tdata_3; // Data to be received
-        public uint axi_s_axis_tstrb; // Valid Bytes marker
+        public ulong axi_s_axis_tdest; // Routing information
+        public bool axi_s_axis_tid; // Data stream identifier
         public uint axi_s_axis_tkeep; // Offset of valid bytes in the data bus
         public bool axi_s_axis_tlast; // Packet boundary
-        public bool axi_s_axis_tid; // Data stream identifier
-        public ulong axi_s_axis_tdest; // Routing information
+        public uint axi_s_axis_tstrb; // Valid Bytes marker
         public ulong axi_s_axis_tuser_0; // user metadata
         public ulong axi_s_axis_tuser_1; // user metadata
-        public bool s_updated = false;
-        
-        
+        public bool m_updated;
+        public bool s_updated;
+
+
         public static bool isReady()
         {
             return Emu.axi_m_axis_tready;
@@ -80,10 +80,8 @@ namespace EmuLibrary
                 Emu.axi_s_axis_tready = false;
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         public bool sendOne(bool check_ready = true, bool check_updated = true)
@@ -107,15 +105,14 @@ namespace EmuLibrary
                 Emu.axi_m_axis_tvalid = false;
                 return true;
             }
-            else if (check_ready && !Emu.axi_m_axis_tready)
+
+            if (check_ready && !Emu.axi_m_axis_tready)
             {
                 debug_functions.push_interrupt(debug_functions.SEND_NOT_READY);
                 return false;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
     }
 
@@ -131,18 +128,16 @@ namespace EmuLibrary
                 Emu.fifo_wr_en = false;
                 return true;
             }
-            else
-            {
-                debug_functions.push_interrupt(debug_functions.FIFO_FULL);
-                return false;
-            }
+
+            debug_functions.push_interrupt(debug_functions.FIFO_FULL);
+            return false;
         }
 
         public bool canPush()
         {
             return !Emu.fifo_full;
         }
-        
+
         public bool canPop()
         {
             return !Emu.fifo_empty;
@@ -152,18 +147,16 @@ namespace EmuLibrary
         {
             if (!Emu.fifo_empty)
             {
-                ulong data = Emu.fifo_dout;
+                var data = Emu.fifo_dout;
                 Emu.fifo_rd_en = true;
                 Kiwi.Pause();
-                
+
                 Emu.fifo_rd_en = false;
                 return data;
             }
-            else
-            {
-                debug_functions.push_interrupt(debug_functions.FIFO_EMPTY);
-                return 0;
-            }
+
+            debug_functions.push_interrupt(debug_functions.FIFO_EMPTY);
+            return 0;
         }
 
         public static bool AXIReady(AXI_interface axi)
@@ -185,10 +178,8 @@ namespace EmuLibrary
                 axi.sendOne(true);
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
     }
 }

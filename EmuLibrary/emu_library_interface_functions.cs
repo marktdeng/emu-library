@@ -4,9 +4,6 @@
 // All rights reserved
 //
 
-using System.Reflection;
-using KiwiSystem;
-
 namespace EmuLibrary
 {
     public static class InterfaceFunctions
@@ -16,27 +13,34 @@ namespace EmuLibrary
         public static readonly byte PORT_2 = 0x04;
         public static readonly byte PORT_3 = 0x10;
         public static readonly byte PORT_4 = 0x40;
-        
+
         public static void SetDestInterface(byte portNumber, CircularFrameBuffer cfb)
         {
             cfb.PeekData.TuserLow = (cfb.PeekData.TuserLow & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
             cfb.UpdatePeek(cfb.PeekData);
         }
+
+        public static void SetDestInterface(byte portNumber, CircularFrameBuffer.BufferEntry be)
+        {
+            be.TuserLow = (be.TuserLow & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
+        }
+
+        public static void SetDestInterface(byte portNumber, EthernetParserGenerator ep)
+        {
+            ep.Metadata = (ep.Metadata & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
+        }
     }
 
     public class BusWidthConverter
     {
-        private byte[] buffer = new byte[16];
-        private byte _writept;
         private byte _readpt;
         private byte _size;
+        private byte _writept;
+        private readonly byte[] buffer = new byte[16];
 
         public void Push(ulong data, byte length = 8)
         {
-            if (length > 8)
-            {
-                length = 8;
-            }
+            if (length > 8) length = 8;
             while (length >= 1)
             {
                 buffer[_writept++] = (byte) data;
@@ -45,13 +49,10 @@ namespace EmuLibrary
                 _size++;
             }
         }
-        
+
         public void Push(uint data, byte length = 4)
         {
-            if (length > 4)
-            {
-                length = 4;
-            }
+            if (length > 4) length = 4;
             while (length >= 1)
             {
                 buffer[_writept++] = (byte) data;
@@ -60,13 +61,10 @@ namespace EmuLibrary
                 _size++;
             }
         }
-        
+
         public void Push(ushort data, byte length = 2)
         {
-            if (length > 2)
-            {
-                length = 2;
-            }
+            if (length > 2) length = 2;
             while (length >= 1)
             {
                 buffer[_writept++] = (byte) data;
@@ -75,26 +73,21 @@ namespace EmuLibrary
                 _size++;
             }
         }
-        
+
         public void Push(byte data, byte length = 1)
         {
-           buffer[_writept++] = (byte) data;
-           data >>= 8;
-           _size++;
+            buffer[_writept++] = data;
+            data >>= 8;
+            _size++;
         }
 
         public byte PopByte()
         {
             if (_size >= 1)
-            {
                 return buffer[_readpt++];
-            }
-            else
-            {
-                return 0;
-            }
+            return 0;
         }
-        
+
         public ulong PopULong()
         {
             if (_size >= 8)
@@ -110,10 +103,8 @@ namespace EmuLibrary
                 temp |= (ulong) PopByte() << 56;
                 return temp;
             }
-            else
-            {
-                return 0;
-            }
+
+            return 0;
         }
 
         public uint PopUInt()
@@ -127,25 +118,21 @@ namespace EmuLibrary
                 temp |= (uint) PopByte() << 24;
                 return temp;
             }
-            else
-            {
-                return 0;
-            }
+
+            return 0;
         }
-        
+
         public uint PopUShort()
         {
             if (_size >= 8)
             {
                 ushort temp;
                 temp = PopByte();
-                temp |= (ushort) ((ushort) PopByte() << 8);
+                temp |= (ushort) (PopByte() << 8);
                 return temp;
             }
-            else
-            {
-                return 0;
-            }
+
+            return 0;
         }
     }
 }
