@@ -66,7 +66,7 @@ internal class Reference_Switch_Lite_V2_Library : Emu
     // TODO maybe we dont need all these buffers as we make the decision based on the first frame
     private static readonly CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
 
-    private static readonly HeaderParse _parser = new HeaderParse();
+    private static readonly EthernetParserGenerator ep = new EthernetParserGenerator();
 
     // This method describes the operations required to route the frames
     public static void switch_logic()
@@ -99,11 +99,11 @@ internal class Reference_Switch_Lite_V2_Library : Emu
 
             CircularNetworkFunctions.RecvFrame(cfb);
 
-            _parser.Parse(cfb, true);
+            ep.Parse(cfb);
 
-            metadata = _parser.ep.Metadata;
-            dst_mac = _parser.ep.DestMac;
-            src_mac = _parser.ep.SrcMac;
+            metadata = ep.Metadata;
+            dst_mac = ep.DestMac;
+            src_mac = ep.SrcMac;
 
             // #############################
             // # Switch Logic -- START
@@ -114,7 +114,7 @@ internal class Reference_Switch_Lite_V2_Library : Emu
             tmp0 = 0UL;
             ptr = 0U;
 
-            broadcast_ports = _parser.ep.BroadcastPorts;
+            broadcast_ports = ep.BroadcastPorts;
             ulong OQ = 0;
             // Search the LUT for the dst_mac and for the src_mac
             for (i = 0U; i < LUT_SIZE; i = i + 1U)

@@ -4,13 +4,11 @@
 // All rights reserved
 //
 
-using System;
-using System.Runtime.Serialization;
-
 // ReSharper disable InconsistentNaming
 
 namespace EmuLibrary
 {
+/*
     public class EmuInterruptException : Exception
     {
         public EmuInterruptException()
@@ -29,6 +27,7 @@ namespace EmuLibrary
         {
         }
     }
+*/
 
     public static class debug_functions
     {
@@ -61,7 +60,7 @@ namespace EmuLibrary
             if (interrupts_enabled)
             {
                 Emu.Interrupts = Emu.Interrupts | (1ul << errortype);
-                if (enable_software_exceptions) throw new EmuInterruptException(Emu.Interrupts.ToString());
+                //if (enable_software_exceptions) throw new EmuInterruptException(Emu.Interrupts.ToString());
             }
         }
 

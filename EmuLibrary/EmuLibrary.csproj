@@ -62,7 +62,6 @@
     <Compile Include="emu_reference_switch_lite_v2_library.cs" />
     <Compile Include="emu_library_frame_buffer.cs" />
     <Compile Include="emu_reference_switch_threads_library.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

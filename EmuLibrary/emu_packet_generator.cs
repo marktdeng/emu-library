@@ -63,10 +63,10 @@ namespace EmuLibrary
 
         private static int Main()
         {
-            System.Console.WriteLine("Hello");
+            //System.Console.WriteLine("Hello");
             SetPacketData();
             generate_packet();
-            cfb.PrintContents();
+            //cfb.PrintContents();
             return 0;
         }
     }

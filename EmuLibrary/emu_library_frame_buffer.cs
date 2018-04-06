@@ -270,6 +270,7 @@
          * Function: PrintContents
          * Description: Software only debugging function to print contents of circular frame buffer
          */
+        /*
         public void PrintContents()
         {
             ResetPeek();
@@ -284,6 +285,7 @@
                 AdvancePeek();
             }
         }
+        */
 
         public class BufferEntry
         {

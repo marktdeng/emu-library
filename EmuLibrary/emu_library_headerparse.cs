@@ -9,13 +9,22 @@ public class HeaderParse
         private bool _ipParsed2;
         private bool _transportParsed;
 
-        public EthernetParserGenerator ep = new EthernetParserGenerator();
-        public IPv4ParserGenerator ipv4 = new IPv4ParserGenerator();
-        public IPv6Parser ipv6 = new IPv6Parser();
+        public EthernetParserGenerator ep;
+        public IPv4ParserGenerator ipv4;
+        public IPv6Parser ipv6;
         public byte IpVersion;
         public byte Protocol;
-        public TCPParser tcp = new TCPParser();
-        public UDPParser udp = new UDPParser();
+        public TCPParser tcp;
+        public UDPParser udp;
+
+        public HeaderParse(EthernetParserGenerator ep, IPv4ParserGenerator ipv4, IPv6Parser ipv6, TCPParser tcp, UDPParser udp)
+        {
+            this.ep = ep;
+            this.ipv4 = ipv4;
+            this.ipv6 = ipv6;
+            this.tcp = tcp;
+            this.udp = udp;
+        }
 
         public void Parse(CircularFrameBuffer cfb, bool newFrame)
         {

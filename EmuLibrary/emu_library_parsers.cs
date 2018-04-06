@@ -9,8 +9,6 @@
 //	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
-using System;
-
 namespace EmuLibrary
 {
     public class EthernetParserGenerator
@@ -491,13 +489,10 @@ namespace EmuLibrary
             return 0;
         }
 
-
-        //TODO
         public byte WriteToBuffer(CircularFrameBuffer.BufferEntry be, byte offset)
         {
             for (byte dataitem = 0; dataitem < 4; dataitem++)
             {
-                Console.WriteLine("OFFSET:" + offset);
 
                 ulong data;
                 if (dataitem > 3) return 0;
@@ -522,7 +517,6 @@ namespace EmuLibrary
 
                 var linenum = offset / 64;
                 var lineoffset = offset % 64;
-                Console.WriteLine("DATA:" + (data << lineoffset).ToString("X16"));
                 if (lineoffset % 8 != 0) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
 
                 if (lineoffset <= 48)
