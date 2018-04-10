@@ -1,12 +1,12 @@
-// IP packet class definition
+//	Emu packet parsing library
 //
-// Copyright 2017 Mark Deng <mtd36@cam.ac.uk>
-// All rights reserved
+//	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+//	All rights reserved
+//
+//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
 using KiwiSystem;
-
-// ReSharper disable InconsistentNaming
 
 namespace EmuLibrary
 {
@@ -105,7 +105,7 @@ namespace EmuLibrary
                 Emu.m_axis_tuser_hi = cfb.PopData.TuserHi;
                 Emu.m_axis_tuser_low = cfb.PopData.TuserLow;
 
-                var done = cfb.PopData.Tlast;
+                bool done = cfb.PopData.Tlast;
 
                 Kiwi.Pause();
 
@@ -141,7 +141,7 @@ namespace EmuLibrary
 
         public static void SendAndCut(CircularFrameBuffer cfb)
         {
-            var status = 0U;
+            uint status = 0U;
             while (status <= 1) status = SendOne(cfb, false, true);
 
             if (status == 2)
@@ -151,7 +151,7 @@ namespace EmuLibrary
 
         private static void CutThrough()
         {
-            var done = false;
+            bool done = false;
             do
             {
                 if (Emu.s_axis_tvalid)

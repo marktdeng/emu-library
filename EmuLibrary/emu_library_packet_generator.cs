@@ -27,7 +27,7 @@
             ep.WriteToBuffer(cfb.PushData);
             ip.WriteToBuffer(cfb.PushData, 0);
 
-            cfb.Push(cfb.PushData);
+            cfb.Push(cfb.PushData, true);
 
             cfb.PushData.Reset();
 

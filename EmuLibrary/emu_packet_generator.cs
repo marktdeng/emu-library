@@ -66,7 +66,13 @@ namespace EmuLibrary
             //System.Console.WriteLine("Hello");
             SetPacketData();
             generate_packet();
-            //cfb.PrintContents();
+            cfb.PrintContents();
+            cfb.ResetPeek();
+            ep.Parse(cfb);
+            System.Console.WriteLine(ep.Ethertype);
+            System.Console.WriteLine((cfb.PeekData.Tdata1 >> 52) & 0x0f);
+            System.Console.WriteLine(ep.IsIPv4);
+    
             return 0;
         }
     }

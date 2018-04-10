@@ -1,4 +1,17 @@
-﻿using KiwiSystem;
+﻿//  Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+//
+//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+//
+//  Copyright 2016	Salvator Galea	<salvator.galea@cl.cam.ac.uk>
+//	All rights reserved
+//
+//	This software was developed by the University of Cambridge,
+//	Computer Laboratory under EPSRC NaaS Project EP/K034723/1 
+//
+//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+//
+
+using KiwiSystem;
 
 namespace EmuLibrary
 {

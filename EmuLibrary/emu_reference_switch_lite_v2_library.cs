@@ -36,7 +36,7 @@
 using EmuLibrary;
 using KiwiSystem;
 
-internal class Reference_Switch_Lite_V2_Library : Emu
+class Reference_Switch_Lite_V2_Library : Emu
 {
     // This class describes the OPL of the reference_switch_lite of the NetFPGA
 
@@ -54,7 +54,7 @@ internal class Reference_Switch_Lite_V2_Library : Emu
     // |-		64bit		-|
     // |-	48bit	--	16bit	-|
     // |-	MAC	--	port	-|
-    private static readonly ulong[] LUT =
+    private static readonly ulong[] LUT = new ulong[LUT_SIZE]
     {
         0x0000000000000001, 0x0000000000000001, 0x0000000000000001, 0x0000000000000001,
         0x0000000000000001, 0x0000000000000001, 0x0000000000000001, 0x0000000000000001,
@@ -71,31 +71,15 @@ internal class Reference_Switch_Lite_V2_Library : Emu
     // This method describes the operations required to route the frames
     public static void switch_logic()
     {
-        ulong tmp0, tmp, tmp1, tmp2, dst_mac = 0UL, src_mac = 0UL, broadcast_ports, metadata = 0UL;
-
-        uint i = 0U, ptr = 0U, free = 0U, cnt = 0U, pkt_size = 0U;
-
-        bool exist = false, LUT_hit = false, IP = false, doneReading;
+        bool exist = false, LUT_hit = false;
 
         while (true) // Process packets indefinately
         {
             // Procedure call for receiving the first frame of the packet
-            cnt = 0U;
-
-            m_axis_tdata_0 = 0x0;
-            m_axis_tdata_1 = 0x0;
-            m_axis_tdata_2 = 0x0;
-            m_axis_tdata_3 = 0x0;
-
-            m_axis_tkeep = 0x0;
-            m_axis_tlast = false;
-            m_axis_tuser_hi = 0x0;
-            m_axis_tuser_low = 0x0;
-            s_axis_tready = true;
+            
+            ulong dst_mac = 0UL, src_mac = 0UL, metadata = 0UL;
 
             Kiwi.Pause();
-
-            doneReading = true;
 
             CircularNetworkFunctions.RecvFrame(cfb);
 
@@ -108,23 +92,21 @@ internal class Reference_Switch_Lite_V2_Library : Emu
             // #############################
             // # Switch Logic -- START
             // #############################
-            tmp = 0UL;
-            tmp1 = 0UL;
-            tmp2 = 0UL;
-            tmp0 = 0UL;
-            ptr = 0U;
 
-            broadcast_ports = ep.BroadcastPorts;
+            uint ptr = 0U;
             ulong OQ = 0;
+
+
             // Search the LUT for the dst_mac and for the src_mac
+            var i = 0U;
             for (i = 0U; i < LUT_SIZE; i = i + 1U)
             {
-                tmp1 = LUT[i];
+                var tmp1 = LUT[i];
                 Kiwi.Pause();
                 // Get the mac address from LUT
-                tmp = tmp1 & 0xffffffffffff0000;
+                var tmp = tmp1 & 0xffffffffffff0000;
                 // Get the output port from LUT
-                tmp2 = tmp1 & 0x00000000000000ff;
+                var tmp2 = tmp1 & 0x00000000000000ff;
 
                 // Check if we have a hit in the LUT for the dst_mac
                 if (dst_mac == tmp >> 16)
@@ -153,7 +135,7 @@ internal class Reference_Switch_Lite_V2_Library : Emu
 
             // If we have a LUT hit prepare the appropriate output port in the metadata, otherwise flood    
 
-            InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) OQ : (byte) broadcast_ports, cfb);
+            InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) OQ : (byte) ep.BroadcastPorts, cfb);
 
             // Update entry
             if (exist) LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
@@ -162,7 +144,6 @@ internal class Reference_Switch_Lite_V2_Library : Emu
             if (!LUT_hit)
             {
                 LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
-                free = free > LUT_SIZE - 1U ? 0U : free = free + 1U;
             }
             // #############################
             // # Switch Logic -- END 
@@ -170,15 +151,6 @@ internal class Reference_Switch_Lite_V2_Library : Emu
 
             // Send out this frame and the rest
             CircularNetworkFunctions.SendAndCut(cfb);
-
-            // End of frame, ready for next frame
-            IP = false;
-            metadata = 0UL;
-            src_mac = 0UL;
-            dst_mac = 0UL;
-            LUT_hit = false;
-            OQ = 0UL;
-            exist = false;
         }
     }
 
