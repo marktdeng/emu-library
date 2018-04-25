@@ -313,7 +313,7 @@ namespace EmuLibrary
 
             public uint Tkeep
             {
-                get => _tkeep;
+                get { return _tkeep; }
                 set
                 {
                     //lock (this)
