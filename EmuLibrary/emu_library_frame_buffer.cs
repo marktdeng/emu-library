@@ -325,7 +325,7 @@ namespace EmuLibrary
 
             public bool Tlast
             {
-                get => _tlast;
+                get { return _tlast; }
                 set
                 {
                     //lock (this)
@@ -337,7 +337,7 @@ namespace EmuLibrary
 
             public ulong Tdata0
             {
-                get => _tdata0;
+                get { return _tdata0; }
                 set
                 {
                     //lock (this)
@@ -349,7 +349,7 @@ namespace EmuLibrary
 
             public ulong Tdata1
             {
-                get => _tdata1;
+                get { return _tdata1; }
                 set
                 {
                     //lock (this)
@@ -361,7 +361,7 @@ namespace EmuLibrary
 
             public ulong Tdata2
             {
-                get => _tdata2;
+                get { return _tdata2; }
                 set
                 {
                     //lock (this)
@@ -373,7 +373,7 @@ namespace EmuLibrary
 
             public ulong Tdata3
             {
-                get => _tdata3;
+                get { return _tdata3; }
                 set
                 {
                     //lock (this)
@@ -385,7 +385,7 @@ namespace EmuLibrary
 
             public ulong TuserHi
             {
-                get => _tuserHi;
+                get { return _tuserHi; }
                 set
                 {
                     //lock (this)
@@ -397,7 +397,7 @@ namespace EmuLibrary
 
             public ulong TuserLow
             {
-                get => _tuserLow;
+                get { return _tuserLow; }
                 set
                 {
                     //lock (this)
