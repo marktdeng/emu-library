@@ -1,10 +1,8 @@
-// IP packet class definition
+// Emu debugging library
 //
-// Copyright 2017 Mark Deng <mtd36@cam.ac.uk>
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
 // All rights reserved
 //
-
-// ReSharper disable InconsistentNaming
 
 namespace EmuLibrary
 {
@@ -29,7 +27,7 @@ namespace EmuLibrary
     }
 */
 
-    public static class debug_functions
+    public static class DebugFunctions
     {
         public const byte PACKET_DROP = 0;
         public const byte PACKET_BUFFER_FULL = 1;
@@ -57,11 +55,7 @@ namespace EmuLibrary
 
         public static void push_interrupt(byte errortype)
         {
-            if (interrupts_enabled)
-            {
-                Emu.Interrupts = Emu.Interrupts | (1ul << errortype);
-                //if (enable_software_exceptions) throw new EmuInterruptException(Emu.Interrupts.ToString());
-            }
+            if (interrupts_enabled) Emu.Interrupts = Emu.Interrupts | (1ul << errortype);
         }
 
         public static void reset_interrupt()

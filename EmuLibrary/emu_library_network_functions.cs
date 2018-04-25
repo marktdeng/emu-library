@@ -1,4 +1,4 @@
-//	Emu packet parsing library
+//	Emu network library
 //
 //	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
 //	All rights reserved
@@ -12,6 +12,10 @@ namespace EmuLibrary
 {
     public static class CircularNetworkFunctions
     {
+        /*
+         * Function: RecvFrame
+         * Description: Receive and buffer an entire Ethernet frame.
+         */
         public static uint RecvFrame(CircularFrameBuffer cfb)
         {
             // The start condition 
@@ -54,6 +58,10 @@ namespace EmuLibrary
             return psize;
         }
 
+        /*
+         * Function: RecvOne
+         * Description: Receive and buffer a single segment of the ethernet frame.
+         */
         public static bool RecvOne(CircularFrameBuffer cfb, bool stop)
         {
             if (cfb.CanPush())
@@ -76,6 +84,10 @@ namespace EmuLibrary
             return false;
         }
 
+        /*
+         * Function: SendFrame
+         * Description: Send the entirety of the buffered ethernet frame.
+         */
         public static void SendFrame(CircularFrameBuffer cfb)
         {
             Reset();
@@ -87,6 +99,10 @@ namespace EmuLibrary
             Reset();
         }
 
+        /*
+        * Function: SendOne
+        * Description: Send a single segment of the buffered ethernet frame.
+        */       
         private static uint SendOne(CircularFrameBuffer cfb, bool stop = true, bool movepeek = false,
             bool checkready = true)
         {
@@ -105,7 +121,7 @@ namespace EmuLibrary
                 Emu.m_axis_tuser_hi = cfb.PopData.TuserHi;
                 Emu.m_axis_tuser_low = cfb.PopData.TuserLow;
 
-                bool done = cfb.PopData.Tlast;
+                var done = cfb.PopData.Tlast;
 
                 Kiwi.Pause();
 
@@ -126,6 +142,10 @@ namespace EmuLibrary
             return 1U;
         }
 
+        /*
+         * Function: Reset
+         * Description: Reset the interfaces to a clean state.
+         */
         private static void Reset()
         {
             Emu.m_axis_tvalid = false;
@@ -139,9 +159,13 @@ namespace EmuLibrary
             Emu.m_axis_tuser_low = 0x0;
         }
 
+        /*
+         * Function: SendAndCut
+         * Description: Send the entirety of buffer and cut if the whole frame hasn't been sent.
+         */
         public static void SendAndCut(CircularFrameBuffer cfb)
         {
-            uint status = 0U;
+            var status = 0U;
             while (status <= 1) status = SendOne(cfb, false, true);
 
             if (status == 2)
@@ -149,34 +173,30 @@ namespace EmuLibrary
             else if (status == 3) CutThrough();
         }
 
+        /*
+         * Function: CutThrough
+         * Description: Continuously sends received data until end of frame.
+         */
         private static void CutThrough()
         {
-            bool done = false;
+            var done = false;
             do
             {
-                if (Emu.s_axis_tvalid)
-                {
-                    Emu.m_axis_tvalid = true;
+                Emu.m_axis_tvalid = Emu.s_axis_tvalid;
 
-                    Emu.s_axis_tready = Emu.m_axis_tready;
+                Emu.s_axis_tready = Emu.m_axis_tready;
 
-                    Emu.m_axis_tdata_0 = Emu.s_axis_tdata_0;
-                    Emu.m_axis_tdata_1 = Emu.s_axis_tdata_1;
-                    Emu.m_axis_tdata_2 = Emu.s_axis_tdata_2;
-                    Emu.m_axis_tdata_3 = Emu.s_axis_tdata_3;
+                Emu.m_axis_tdata_0 = Emu.s_axis_tdata_0;
+                Emu.m_axis_tdata_1 = Emu.s_axis_tdata_1;
+                Emu.m_axis_tdata_2 = Emu.s_axis_tdata_2;
+                Emu.m_axis_tdata_3 = Emu.s_axis_tdata_3;
 
-                    Emu.m_axis_tkeep = Emu.s_axis_tkeep;
-                    Emu.m_axis_tlast = Emu.s_axis_tlast;
-                    Emu.m_axis_tuser_hi = 0U;
-                    Emu.m_axis_tuser_low = 0U;
+                Emu.m_axis_tkeep = Emu.s_axis_tkeep;
+                Emu.m_axis_tlast = Emu.s_axis_tlast;
+                Emu.m_axis_tuser_hi = 0U;
+                Emu.m_axis_tuser_low = 0U;
 
-                    done = Emu.s_axis_tlast && Emu.s_axis_tvalid && Emu.m_axis_tready;
-                }
-                else
-                {
-                    Emu.m_axis_tvalid = false;
-                    Emu.s_axis_tready = false;
-                }
+                done = Emu.s_axis_tlast && Emu.s_axis_tvalid && Emu.m_axis_tready;
 
                 Kiwi.Pause();
             } while (!done);
@@ -186,6 +206,10 @@ namespace EmuLibrary
             Reset();
         }
 
+        /*
+         * Function: SendWithFCS
+         * Description: Sends the whole buffered frame, appending the FCS at the end.
+         */
         public static void SendWithFCS(CircularFrameBuffer cfb)
         {
         }

@@ -1,6 +1,14 @@
-﻿namespace EmuLibrary
+﻿//	Emu header generation library
+//
+//	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+//	All rights reserved
+//
+//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+//
+
+namespace EmuLibrary
 {
-    public class PacketGen
+    public class HeaderGen
     {
         public void WriteIPv4EthernetHeader(CircularFrameBuffer cfb, EthernetParserGenerator ep, IPv4ParserGenerator ip)
         {

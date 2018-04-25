@@ -50,7 +50,7 @@ internal class EmuReferenceSwitchThreads : Emu
     [Kiwi.Volatile] private static ulong metadata;
     [Kiwi.Volatile] private static bool eth_header_rdy;
 
-    private static readonly fifo_interface fifo = new fifo_interface();
+    private static readonly FifoInterface fifo = new FifoInterface();
 
     // #############################
     // # Main Hardware Enrty point

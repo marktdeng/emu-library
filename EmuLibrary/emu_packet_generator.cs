@@ -17,7 +17,7 @@ namespace EmuLibrary
 
         private static readonly CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
 
-        private static readonly PacketGen pg = new PacketGen();
+        private static readonly HeaderGen pg = new HeaderGen();
         private static readonly UDPParser up = new UDPParser();
         private static readonly EthernetParserGenerator ep = new EthernetParserGenerator();
         private static readonly IPv4ParserGenerator ip = new IPv4ParserGenerator();
@@ -66,7 +66,7 @@ namespace EmuLibrary
             //System.Console.WriteLine("Hello");
             SetPacketData();
             generate_packet();
-            cfb.PrintContents();
+            //cfb.PrintContents();
             cfb.ResetPeek();
             ep.Parse(cfb);
             System.Console.WriteLine(ep.Ethertype);

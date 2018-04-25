@@ -1,6 +1,18 @@
-﻿namespace EmuLibrary
+﻿// Emu header parsing library
+//
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+// All rights reserved
+//
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+//
+
+namespace EmuLibrary
 {
-public class HeaderParse
+/*
+ * Class: HeaderParse
+ * Description: Convenience class to automatically parse supported headers.
+ */
+    public class HeaderParse
     {
         private bool _ethParsed;
 
@@ -17,7 +29,8 @@ public class HeaderParse
         public TCPParser tcp;
         public UDPParser udp;
 
-        public HeaderParse(EthernetParserGenerator ep, IPv4ParserGenerator ipv4, IPv6Parser ipv6, TCPParser tcp, UDPParser udp)
+        public HeaderParse(EthernetParserGenerator ep, IPv4ParserGenerator ipv4, IPv6Parser ipv6, TCPParser tcp,
+            UDPParser udp)
         {
             this.ep = ep;
             this.ipv4 = ipv4;

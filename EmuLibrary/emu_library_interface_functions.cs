@@ -1,7 +1,9 @@
-﻿// Emu Interface Management Functions
+﻿// Emu interface management library
 //
-// Copyright 2017 Mark Deng <mtd36@cam.ac.uk>
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
 // All rights reserved
+//
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
 namespace EmuLibrary
@@ -33,10 +35,10 @@ namespace EmuLibrary
 
     public class BusWidthConverter
     {
+        private readonly byte[] buffer = new byte[16];
         private byte _readpt;
         private byte _size;
         private byte _writept;
-        private readonly byte[] buffer = new byte[16];
 
         public void Push(ulong data, byte length = 8)
         {

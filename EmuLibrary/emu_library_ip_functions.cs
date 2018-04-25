@@ -1,4 +1,4 @@
-// IP packet class definition
+// Emu IP interfacing library
 //
 // Copyright 2017 Mark Deng <mtd36@cam.ac.uk>
 // All rights reserved
@@ -6,15 +6,10 @@
 
 using KiwiSystem;
 
-// ReSharper disable InconsistentNaming
-
 namespace EmuLibrary
 {
-    public class ip_functions
-    {
-    }
 
-    public class AXI_interface
+    public class AxiInterface
     {
         // AXI Ports
         public ulong axi_m_axis_tdata_0; // Data to be received
@@ -108,7 +103,7 @@ namespace EmuLibrary
 
             if (check_ready && !Emu.axi_m_axis_tready)
             {
-                debug_functions.push_interrupt(debug_functions.SEND_NOT_READY);
+                DebugFunctions.push_interrupt(DebugFunctions.SEND_NOT_READY);
                 return false;
             }
 
@@ -116,7 +111,7 @@ namespace EmuLibrary
         }
     }
 
-    public class fifo_interface
+    public class FifoInterface
     {
         public bool push(ulong data)
         {
@@ -129,7 +124,7 @@ namespace EmuLibrary
                 return true;
             }
 
-            debug_functions.push_interrupt(debug_functions.FIFO_FULL);
+            DebugFunctions.push_interrupt(DebugFunctions.FIFO_FULL);
             return false;
         }
 
@@ -155,23 +150,23 @@ namespace EmuLibrary
                 return data;
             }
 
-            debug_functions.push_interrupt(debug_functions.FIFO_EMPTY);
+            DebugFunctions.push_interrupt(DebugFunctions.FIFO_EMPTY);
             return 0;
         }
 
-        public static bool AXIReady(AXI_interface axi)
+        public static bool AXIReady(AxiInterface axi)
         {
-            return AXI_interface.isReady();
+            return AxiInterface.isReady();
         }
 
-        public static bool AXIValid(AXI_interface axi)
+        public static bool AXIValid(AxiInterface axi)
         {
-            return AXI_interface.isValid();
+            return AxiInterface.isValid();
         }
 
-        public static bool pushAXI(ulong data, AXI_interface axi)
+        public static bool pushAXI(ulong data, AxiInterface axi)
         {
-            if (AXI_interface.isReady())
+            if (AxiInterface.isReady())
             {
                 axi.axi_m_axis_tdata_0 = data;
                 axi.m_updated = true;

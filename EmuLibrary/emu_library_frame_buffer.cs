@@ -1,22 +1,15 @@
-﻿// Emu Library Frame Buffer
+﻿// Emu library frame buffer
 //
 // Copyright 2017-10`8 Mark Deng <mtd36@cam.ac.uk>
 // All rights reserved
 //
-//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
 namespace EmuLibrary
 {
     public class CircularFrameBuffer
     {
-        public readonly BufferEntry PeekData = new BufferEntry();
-
-        public readonly BufferEntry PopData = new BufferEntry();
-
-        public readonly BufferEntry PushData = new BufferEntry();
-        private uint _curstart;
-
         private readonly object _lck = new object();
         private readonly uint[] _pstart;
         private readonly ulong[] _tdata_0;
@@ -28,6 +21,12 @@ namespace EmuLibrary
         private readonly ulong[] _tuser_hi; // unused
         private readonly ulong[] _tuser_low;
         private readonly bool[] _valid;
+        public readonly BufferEntry PeekData = new BufferEntry();
+
+        public readonly BufferEntry PopData = new BufferEntry();
+
+        public readonly BufferEntry PushData = new BufferEntry();
+        private uint _curstart;
 
         public uint Bufsize;
         private uint count;
@@ -95,7 +94,7 @@ namespace EmuLibrary
          */
         public bool ForwardPeek()
         {
-            lock (PeekData)
+            //lock (PeekData)
             {
                 if (writeloc == 0)
                     peekloc = Bufsize - 1;
@@ -113,7 +112,7 @@ namespace EmuLibrary
          */
         public bool ResetPeek()
         {
-            lock (PeekData)
+            //lock (PeekData)
             {
                 peekloc = poploc;
             }
@@ -127,7 +126,7 @@ namespace EmuLibrary
          */
         public bool RewindPeek()
         {
-            lock (PeekData)
+            //lock (PeekData)
             {
                 peekloc = _pstart[peekloc];
                 return Peek();
@@ -143,11 +142,11 @@ namespace EmuLibrary
         {
             if (!CanPush())
             {
-                debug_functions.push_interrupt(debug_functions.FIFO_FULL);
+                DebugFunctions.push_interrupt(DebugFunctions.FIFO_FULL);
                 return false;
             }
 
-            lock (_lck)
+            //lock (_lck)
             {
                 if (pstart) _curstart = writeloc;
 
@@ -184,13 +183,13 @@ namespace EmuLibrary
          */
         public bool UpdatePeek(BufferEntry be)
         {
-            lock (_lck)
+            //lock (_lck)
             {
-                lock (PeekData)
+                //lock (PeekData)
                 {
                     if (!_valid[peekloc])
                     {
-                        debug_functions.push_interrupt(debug_functions.PACKET_BUFFER_INVALID);
+                        DebugFunctions.push_interrupt(DebugFunctions.PACKET_BUFFER_INVALID);
                         return false;
                     }
 
@@ -224,9 +223,9 @@ namespace EmuLibrary
         public bool Pop(bool movePeek = false)
         {
             if (!CanPop(movePeek)) return false;
-            lock (_lck)
+            //lock (_lck)
             {
-                lock (PopData)
+                //lock (PopData)
                 {
                     PopData.Update(_tkeep[poploc], _tlast[poploc], _tdata_0[poploc], _tdata_1[poploc], _tdata_2[poploc],
                         _tdata_3[poploc], _tuser_hi[poploc], _tuser_low[poploc]);
@@ -259,9 +258,9 @@ namespace EmuLibrary
          */
         public bool Peek(bool advance = false)
         {
-            lock (_lck)
+            //lock (_lck)
             {
-                lock (PeekData)
+                //lock (PeekData)
                 {
                     if (advance && CanAdvance()) peekloc = (peekloc + 1) % Bufsize;
                     else if (!CanAdvance()) return false;
@@ -314,10 +313,10 @@ namespace EmuLibrary
 
             public uint Tkeep
             {
-                get { return _tkeep; }
+                get => _tkeep;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tkeep = value;
                     }
@@ -326,10 +325,10 @@ namespace EmuLibrary
 
             public bool Tlast
             {
-                get { return _tlast; }
+                get => _tlast;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tlast = value;
                     }
@@ -338,10 +337,10 @@ namespace EmuLibrary
 
             public ulong Tdata0
             {
-                get { return _tdata0; }
+                get => _tdata0;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tdata0 = value;
                     }
@@ -350,10 +349,10 @@ namespace EmuLibrary
 
             public ulong Tdata1
             {
-                get { return _tdata1; }
+                get => _tdata1;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tdata1 = value;
                     }
@@ -362,10 +361,10 @@ namespace EmuLibrary
 
             public ulong Tdata2
             {
-                get { return _tdata2; }
+                get => _tdata2;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tdata2 = value;
                     }
@@ -374,10 +373,10 @@ namespace EmuLibrary
 
             public ulong Tdata3
             {
-                get { return _tdata3; }
+                get => _tdata3;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tdata3 = value;
                     }
@@ -386,10 +385,10 @@ namespace EmuLibrary
 
             public ulong TuserHi
             {
-                get { return _tuserHi; }
+                get => _tuserHi;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tuserHi = value;
                     }
@@ -398,10 +397,10 @@ namespace EmuLibrary
 
             public ulong TuserLow
             {
-                get { return _tuserLow; }
+                get => _tuserLow;
                 set
                 {
-                    lock (this)
+                    //lock (this)
                     {
                         _tuserLow = value;
                     }
@@ -416,7 +415,7 @@ namespace EmuLibrary
             public void Update(uint tkeep, bool tlast, ulong tdata0, ulong tdata1, ulong tdata2, ulong tdata3,
                 ulong tuserHi, ulong tuserLow)
             {
-                lock (this)
+                //lock (this)
                 {
                     Tkeep = tkeep;
                     Tlast = tlast;
@@ -429,9 +428,14 @@ namespace EmuLibrary
                 }
             }
 
+            /*
+             * Function: Reset
+             * Description: Reset all of the values within the buffer entry to 0.
+             *              Does not update the value held within the buffer.
+             */
             public void Reset()
             {
-                lock (this)
+                //lock (this)
                 {
                     _tkeep = 0;
                     _tlast = false;

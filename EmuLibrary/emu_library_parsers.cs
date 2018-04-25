@@ -24,25 +24,29 @@ namespace EmuLibrary
         public int Parse(CircularFrameBuffer cfb)
         {
             //while (!cfb.CanAdvance()) return 2;
-
+            
             cfb.Peek();
-            lock (cfb.PeekData)
+            //lock (cfb.PeekData)
             {
-                Metadata = cfb.PeekData.TuserLow;
-                DestMac = cfb.PeekData.Tdata0 & 0xffffffffffff;
-                SrcMac = ((cfb.PeekData.Tdata0 >> 48) & 0x00ffff) |
-                         ((cfb.PeekData.Tdata1 & 0x00ffffffff) << 16);
-                BroadcastPorts = ((cfb.PeekData.TuserLow & 0x00FF0000) ^ Emu.DEFAULT_oqs) << 8;
-                Ethertype = (uint) ((cfb.PeekData.Tdata1 >> 32) & 0x00ffff);
-                IsIPv4 = ((cfb.PeekData.Tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV4;// &&
-                //         ((cfb.PeekData.Tdata1 >> 52) & 0x0f) == 0x04; //Temporary Fix for Kiwi Bug
-                IsIPv6 = ((cfb.PeekData.Tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV6;// &&
-                //         ((cfb.PeekData.Tdata1 >> 52) & 0x0f) == 0x06;
+                return Parse(cfb.PeekData.Tdata0, cfb.PeekData.Tdata1, cfb.PeekData.TuserLow);
             }
+        }
 
+        public int Parse(ulong tdata0, ulong tdata1, ulong tuserLow)
+        {
+            Metadata = tuserLow;
+            DestMac = tdata0 & 0xffffffffffff;
+            SrcMac = ((tdata0 >> 48) & 0x00ffff) |
+                     ((tdata1 & 0x00ffffffff) << 16);
+            BroadcastPorts = ((tuserLow & 0x00FF0000) ^ Emu.DEFAULT_oqs) << 8;
+            Ethertype = (uint) ((tdata1 >> 32) & 0x00ffff);
+            IsIPv4 = ((tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV4 &&
+                     ((tdata1 >> 52) & 0x0f) == 0x04; 
+            IsIPv6 = ((tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV6 &&
+                     ((tdata1 >> 52) & 0x0f) == 0x06;
             return 0;
         }
-        
+
         public void PushHeader(CircularFrameBuffer cfb)
         {
             WriteToBuffer(cfb.PushData);
@@ -62,7 +66,7 @@ namespace EmuLibrary
         {
             UpdateHeader(cfb, DestMac, SrcMac, Ethertype, Metadata);
         }
-               
+
         public void UpdateHeader(CircularFrameBuffer cfb, ulong destMac, ulong srcMac, uint ethertype,
             ulong metadata)
         {
@@ -110,8 +114,7 @@ namespace EmuLibrary
 
         public byte Rearrange(CircularFrameBuffer cfb, bool skip = false)
         {
-
-            lock (cfb.PeekData)
+            //lock (cfb.PeekData)
             {
                 IHL = (byte) ((cfb.PeekData.Tdata1 >> 48) & 0x0f);
 
@@ -183,7 +186,7 @@ namespace EmuLibrary
             if (!assembled) AssembleHeader();
 
             cfb.RewindPeek();
-            lock (cfb.PeekData)
+            //lock (cfb.PeekData)
             {
                 cfb.PeekData.Tdata1 = (cfb.PeekData.Tdata1 & 0x0000ffffffffffff) | (data_0 << 48);
                 cfb.PeekData.Tdata2 = (data_0 >> 16) | (data_1 << 48);
@@ -255,9 +258,8 @@ namespace EmuLibrary
 
         public byte ParseSplit(CircularFrameBuffer cfb, bool skip = false)
         {
-            lock (cfb.PeekData)
+            //lock (cfb.PeekData)
             {
-
                 if (!skip)
                 {
                     data_0 = cfb.PeekData.Tdata1 >> 48;
@@ -267,9 +269,9 @@ namespace EmuLibrary
                     data_2 = cfb.PeekData.Tdata3 >> 48;
 
                     Version = (byte) ((cfb.PeekData.Tdata1 >> 52) & 0x0f);
-                    if (Version != 4) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                    if (Version != 4) DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
                     IHL = (byte) ((cfb.PeekData.Tdata1 >> 48) & 0x0f);
-                    if (IHL < 5 || IHL > 8) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                    if (IHL < 5 || IHL > 8) DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
                     DSCP = (byte) ((cfb.PeekData.Tdata1 >> 58) & 0x3F);
                     ECN = (byte) ((cfb.PeekData.Tdata1 >> 56) & 0x3);
                     TotalLength = (uint) (cfb.PeekData.Tdata2 & 0x00ffff);
@@ -356,7 +358,7 @@ namespace EmuLibrary
         public byte Parse(CircularFrameBuffer cfb, bool skip = false)
         {
             if (!skip)
-                lock (cfb.PeekData)
+                //lock (cfb.PeekData)
                 {
                     Version = (byte) ((cfb.PeekData.Tdata1 >> 52) & 0x0f);
                     TrafficClass =
@@ -375,7 +377,7 @@ namespace EmuLibrary
 
             cfb.AdvancePeek();
 
-            lock (cfb.PeekData)
+            //lock (cfb.PeekData)
             {
                 SrcIp2 = _tmp_src_ip_2 | ((cfb.PeekData.Tdata0 & 0x00ffffffffffff) << 16);
                 DestIp1 = (cfb.PeekData.Tdata0 >> 48) & 0x00ffff;
@@ -483,7 +485,6 @@ namespace EmuLibrary
         {
             for (byte dataitem = 0; dataitem < 4; dataitem++)
             {
-
                 ulong data;
                 if (dataitem > 3) return 0;
 
@@ -507,7 +508,7 @@ namespace EmuLibrary
 
                 var linenum = offset / 64;
                 var lineoffset = offset % 64;
-                if (lineoffset % 8 != 0) debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                if (lineoffset % 8 != 0) DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
 
                 if (lineoffset <= 48)
                     switch (linenum)
@@ -544,7 +545,7 @@ namespace EmuLibrary
                                         (data >> (64 - lineoffset));
                             break;
                         case 3:
-                            debug_functions.push_interrupt(debug_functions.ILLEGAL_PACKET_FORMAT);
+                            DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
                             break;
                     }
 
@@ -619,6 +620,4 @@ namespace EmuLibrary
             return 0;
         }
     }
-
-    
 }
