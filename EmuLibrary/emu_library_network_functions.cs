@@ -64,24 +64,22 @@ namespace EmuLibrary
          */
         public static bool RecvOne(CircularFrameBuffer cfb, bool stop)
         {
-            if (cfb.CanPush())
-                if (Emu.s_axis_tvalid && cfb.CanPush())
-                {
-                    Emu.s_axis_tready = true;
+            if (Emu.s_axis_tvalid && cfb.CanPush())
+            {
+                Emu.s_axis_tready = true;
 
-                    cfb.Push(Emu.s_axis_tkeep, Emu.s_axis_tlast, Emu.s_axis_tdata_0, Emu.s_axis_tdata_1,
-                        Emu.s_axis_tdata_2, Emu.s_axis_tdata_3, Emu.s_axis_tuser_hi, Emu.s_axis_tuser_low);
-                    Kiwi.Pause();
-                    if (stop) Reset();
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                cfb.Push(Emu.s_axis_tkeep, Emu.s_axis_tlast, Emu.s_axis_tdata_0, Emu.s_axis_tdata_1,
+                    Emu.s_axis_tdata_2, Emu.s_axis_tdata_3, Emu.s_axis_tuser_hi, Emu.s_axis_tuser_low);
+                Kiwi.Pause();
+                if (stop) Reset();
+                return true;
+            }
+            else
+            {
+                Emu.s_axis_tready = false;
+                return false;
+            }
 
-            Emu.s_axis_tready = false;
-            return false;
         }
 
         /*

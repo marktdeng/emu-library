@@ -81,13 +81,15 @@ class Reference_Switch_Lite_V2_Library : Emu
 
             Kiwi.Pause();
 
-            CircularNetworkFunctions.RecvFrame(cfb);
+            CircularNetworkFunctions.RecvOne(cfb, true);
 
             ep.Parse(cfb);
 
             metadata = ep.Metadata;
             dst_mac = ep.DestMac;
             src_mac = ep.SrcMac;
+            
+            
 
             // #############################
             // # Switch Logic -- START
@@ -138,13 +140,14 @@ class Reference_Switch_Lite_V2_Library : Emu
             InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) OQ : (byte) ep.BroadcastPorts, cfb);
 
             // Update entry
-            if (exist) LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
+            if ( exist ) LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
             Kiwi.Pause();
             // Create entry
             if (!LUT_hit)
             {
                 LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);
             }
+            
             // #############################
             // # Switch Logic -- END 
             // #############################
