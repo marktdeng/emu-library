@@ -62,8 +62,17 @@ namespace EmuLibrary
          * Function: RecvOne
          * Description: Receive and buffer a single segment of the ethernet frame.
          */
-        public static bool RecvOne(CircularFrameBuffer cfb, bool stop)
+        public static bool RecvOne(CircularFrameBuffer cfb, bool stop, bool wait = false)
         {
+            if (wait)
+            {
+                while (!Emu.s_axis_tvalid)
+                {
+                    Emu.s_axis_tready = true;
+                    Kiwi.Pause();
+                }
+            }
+            
             if (Emu.s_axis_tvalid && cfb.CanPush())
             {
                 Emu.s_axis_tready = true;
@@ -79,7 +88,6 @@ namespace EmuLibrary
                 Emu.s_axis_tready = false;
                 return false;
             }
-
         }
 
         /*
@@ -118,7 +126,7 @@ namespace EmuLibrary
                 Emu.m_axis_tlast = cfb.PopData.Tlast;
                 Emu.m_axis_tuser_hi = cfb.PopData.TuserHi;
                 Emu.m_axis_tuser_low = cfb.PopData.TuserLow;
-
+                
                 var done = cfb.PopData.Tlast;
 
                 Kiwi.Pause();
@@ -155,6 +163,7 @@ namespace EmuLibrary
             Emu.m_axis_tkeep = 0x0;
             Emu.m_axis_tuser_hi = 0x0;
             Emu.m_axis_tuser_low = 0x0;
+            Emu.s_axis_tready = false;
         }
 
         /*

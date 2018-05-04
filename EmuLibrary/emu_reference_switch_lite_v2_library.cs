@@ -81,7 +81,7 @@ class Reference_Switch_Lite_V2_Library : Emu
 
             Kiwi.Pause();
 
-            CircularNetworkFunctions.RecvOne(cfb, true);
+            CircularNetworkFunctions.RecvOne(cfb, true, true);
 
             ep.Parse(cfb);
 
