@@ -54,7 +54,7 @@ class Reference_Switch_Lite_V2_Library : Emu
     // |-		64bit		-|
     // |-	48bit	--	16bit	-|
     // |-	MAC	--	port	-|
-    private static readonly ulong[] LUT = new ulong[LUT_SIZE]
+    private static readonly ulong[] LUT = new ulong[]
     {
         0x0000000000000001, 0x0000000000000001, 0x0000000000000001, 0x0000000000000001,
         0x0000000000000001, 0x0000000000000001, 0x0000000000000001, 0x0000000000000001,
@@ -71,12 +71,11 @@ class Reference_Switch_Lite_V2_Library : Emu
     // This method describes the operations required to route the frames
     public static void switch_logic()
     {
-        bool exist = false, LUT_hit = false;
-
         while (true) // Process packets indefinately
         {
             // Procedure call for receiving the first frame of the packet
-            
+            bool exist = false, LUT_hit = false;
+
             ulong dst_mac = 0UL, src_mac = 0UL, metadata = 0UL;
 
             Kiwi.Pause();

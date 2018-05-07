@@ -174,7 +174,7 @@ namespace EmuLibrary
          */
         public bool Push(BufferEntry be, bool pstart = false)
         {
-            return Push(be.Tkeep, be.Tlast, be.Tdata0, be.Tdata1, be.Tdata2, be.Tdata3, be.TuserHi, be.TuserHi, pstart);
+            return Push(be.Tkeep, be.Tlast, be.Tdata0, be.Tdata1, be.Tdata2, be.Tdata3, be.TuserHi, be.TuserLow, pstart);
         }
 
         /*

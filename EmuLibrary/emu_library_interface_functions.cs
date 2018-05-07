@@ -18,18 +18,18 @@ namespace EmuLibrary
 
         public static void SetDestInterface(byte portNumber, CircularFrameBuffer cfb)
         {
-            cfb.PeekData.TuserLow = (cfb.PeekData.TuserLow & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
+            cfb.PeekData.TuserLow = (cfb.PeekData.TuserLow & 0xFFFFFFFF00FFFFFF) |  ((ulong) portNumber << 24);
             cfb.UpdatePeek(cfb.PeekData);
         }
 
         public static void SetDestInterface(byte portNumber, CircularFrameBuffer.BufferEntry be)
         {
-            be.TuserLow = (be.TuserLow & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
+            be.TuserLow = (be.TuserLow & 0xFFFFFFFF00FFFFFF) | ((ulong) portNumber << 24);
         }
 
         public static void SetDestInterface(byte portNumber, EthernetParserGenerator ep)
         {
-            ep.Metadata = (ep.Metadata & 0xFFFFFFFF00FFFFFF) | (ulong) (portNumber << 24);
+            ep.Metadata = (ep.Metadata & 0xFFFFFFFF00FFFFFF) | ((ulong) portNumber << 24);
         }
     }
 

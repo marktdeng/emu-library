@@ -22,6 +22,8 @@ namespace EmuLibrary
         private static readonly EthernetParserGenerator ep = new EthernetParserGenerator();
         private static readonly IPv4ParserGenerator ip = new IPv4ParserGenerator();
 
+        private static readonly crc32 crc = new crc32();
+
         private static void SetPacketData()
         {
             up.SrcPort = SRC_PORT;
@@ -49,7 +51,17 @@ namespace EmuLibrary
 
         private static void generate_packet()
         {
-            pg.WriteUDPHeader(cfb, up, ep, ip);
+            pg.WriteUDPHeader(cfb, up, ep, ip, InterfaceFunctions.PORT_BROADCAST);
+            cfb.ForwardPeek();
+            cfb.PeekData.Tkeep = 0x0000002FF;
+            cfb.PeekData.Tlast = true;
+            cfb.WritePeek(cfb.PeekData);
+
+            //cfb.PrintContents();
+
+            CircularNetworkFunctions.SendWithFCS(cfb, crc);
+
+            Kiwi.Pause();
         }
 
 
@@ -58,20 +70,21 @@ namespace EmuLibrary
         {
             SetPacketData();
             while (true) generate_packet();
-            ;
+            
         }
 
         private static int Main()
         {
-            //System.Console.WriteLine("Hello");
+            //Emu.m_axis_tready = true;
+
             SetPacketData();
             generate_packet();
             //cfb.PrintContents();
-            cfb.ResetPeek();
-            ep.Parse(cfb);
-            System.Console.WriteLine(ep.Ethertype);
-            System.Console.WriteLine((cfb.PeekData.Tdata1 >> 52) & 0x0f);
-            System.Console.WriteLine(ep.IsIPv4);
+            //cfb.ResetPeek();
+            //ep.Parse(cfb);
+            //System.Console.WriteLine(ep.Ethertype);
+            //System.Console.WriteLine((cfb.PeekData.Tdata1 >> 52) & 0x0f);
+            //System.Console.WriteLine(ep.IsIPv4);
     
             return 0;
         }

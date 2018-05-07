@@ -10,12 +10,18 @@ namespace EmuLibrary
 {
     public class HeaderGen
     {
-        public void WriteIPv4EthernetHeader(CircularFrameBuffer cfb, EthernetParserGenerator ep, IPv4ParserGenerator ip)
+        public void WriteIPv4EthernetHeader(CircularFrameBuffer cfb, EthernetParserGenerator ep, IPv4ParserGenerator ip,
+            byte ports)
         {
             ip.AssembleHeader();
             ep.WriteToBuffer(cfb.PushData);
             ip.WriteToBuffer(cfb.PushData, 0);
 
+            cfb.PushData.Tkeep = 0xFFFFFFFF;
+            cfb.PushData.Tlast = false;
+            
+            InterfaceFunctions.SetDestInterface(ports, cfb.PushData);
+            
             cfb.Push(cfb.PushData);
 
             cfb.PushData.Reset();
@@ -26,7 +32,7 @@ namespace EmuLibrary
         }
 
         public void WriteUDPHeader(CircularFrameBuffer cfb, UDPParser up, EthernetParserGenerator ep,
-            IPv4ParserGenerator ip)
+            IPv4ParserGenerator ip, byte ports)
         {
             ip.Protocol = 17;
             ip.AssembleHeader();
@@ -35,7 +41,11 @@ namespace EmuLibrary
             ep.WriteToBuffer(cfb.PushData);
             ip.WriteToBuffer(cfb.PushData, 0);
 
+            InterfaceFunctions.SetDestInterface(ports, cfb.PushData);
+            
             cfb.Push(cfb.PushData, true);
+
+            cfb.ResetPeek();            
 
             cfb.PushData.Reset();
 

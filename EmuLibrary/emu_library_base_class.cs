@@ -249,5 +249,23 @@ namespace EmuLibrary
         protected internal static ulong Status = 0x00; // Status indicator
 
         protected internal static ulong DEFAULT_oqs = 0x0000000000550000;
+        
+        public static uint SwapEndian(uint x)
+        {
+            return ((x & 0x000000ff) << 24) | ((x & 0x0000ff00) << 8) |
+                   ((x & 0x00ff0000) >> 8) | ((x & 0xff000000) >> 24);
+        }
+
+        public static ulong SwapEndian(ulong x)
+        {
+            return ((x & 0x00000000000000ff) << 56) |
+                   ((x & 0x000000000000ff00) << 40) |
+                   ((x & 0x0000000000ff0000) << 24) |
+                   ((x & 0x00000000ff000000) << 8)  |
+                   ((x & 0x000000ff00000000) >> 8)  |
+                   ((x & 0x0000ff0000000000) >> 24) |
+                   ((x & 0x00ff000000000000) >> 40) |
+                   ((x & 0xff00000000000000) >> 56);
+        }
     }
 }
