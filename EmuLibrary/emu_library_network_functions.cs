@@ -6,10 +6,6 @@
 //	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
-using System;
-using System.Collections;
-using System.ComponentModel.Design;
-using System.Linq.Expressions;
 using KiwiSystem;
 
 namespace EmuLibrary
@@ -87,11 +83,9 @@ namespace EmuLibrary
                 if (stop) Reset();
                 return true;
             }
-            else
-            {
-                Emu.s_axis_tready = false;
-                return false;
-            }
+
+            Emu.s_axis_tready = false;
+            return false;
         }
 
         /*
@@ -240,11 +234,8 @@ namespace EmuLibrary
                     if (SendData(cfb, true))
                     {
                         crc.CRC_Compute(cfb.PopData);
-                        
+                        cont = !cfb.PopData.Tlast;
                     };
-
-                    cont = !(cfb.PopData.Tlast && Emu.m_axis_tready);
-                   
 
                     if (cfb.PopData.Tlast)
                     {
@@ -257,7 +248,7 @@ namespace EmuLibrary
                         else if (size > 20)
                         {
                             Emu.m_axis_tdata_3 = cfb.PopData.Tdata3 | (crc.CRC_LittleEndian() >> ((24 - size) * 8));
-                            Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | ((ulong) crc.CRC_LittleEndian() << ((size - 16) * 8));
+                            Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() << ((size - 16) * 8));
                         }
                         else if (size >= 16)
                         {
@@ -266,7 +257,7 @@ namespace EmuLibrary
                         else if (size > 12)
                         {
                             Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() >> ((16 - size) * 8));
-                            Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | ((ulong) crc.CRC_LittleEndian() << (size * 8));
+                            Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | (crc.CRC_LittleEndian() << (size * 8));
                         }
                         else if (size >= 8)
                         {
@@ -275,7 +266,7 @@ namespace EmuLibrary
                         else if (size > 4)
                         {
                             Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | (crc.CRC_LittleEndian() >> ((8 - size) * 8));
-                            Emu.m_axis_tdata_0 = cfb.PopData.Tdata0 | ((ulong) crc.CRC_LittleEndian() << (size * 8));
+                            Emu.m_axis_tdata_0 = cfb.PopData.Tdata0 | (crc.CRC_LittleEndian() << (size * 8));
                         }
                         else
                         {
@@ -283,8 +274,10 @@ namespace EmuLibrary
                         }
 
                         Emu.m_axis_tkeep = Emu.m_axis_tkeep << 4 | 0xF;
-                    }
+                        
+                        //Console.WriteLine($"{size}:{crc.CRC_LittleEndian():X16}");
 
+                    }
                     //Console.WriteLine($"{Emu.m_axis_tdata_0:X16},\n{Emu.m_axis_tdata_1:X16},\n{Emu.m_axis_tdata_2:X16},\n{Emu.m_axis_tdata_3:X16}");
                     Kiwi.Pause();
                 }
@@ -313,7 +306,7 @@ namespace EmuLibrary
             if ((input >> 62) == 0) { n = n + 2; input = input << 2; }
             n = n - (uint) (input >> 63);
 
-            return (uint) (64 - n);
+            return 64 - n;
         }
     }
     
@@ -321,8 +314,7 @@ namespace EmuLibrary
 
     public class crc32
     {
-        private static readonly uint[] crc_table = new uint[]
-        {
+        private static readonly uint[] crc_table = {
             0x00000000U, 0x77073096U, 0xee0e612cU, 0x990951baU, 0x076dc419U, 0x706af48fU, 0xe963a535U, 0x9e6495a3U,
             0x0edb8832U, 0x79dcb8a4U, 0xe0d5e91eU, 0x97d2d988U, 0x09b64c2bU, 0x7eb17cbdU, 0xe7b82d07U, 0x90bf1d91U,
             0x1db71064U, 0x6ab020f2U, 0xf3b97148U, 0x84be41deU, 0x1adad47dU, 0x6ddde4ebU, 0xf4d4b551U, 0x83d385c7U,
@@ -357,7 +349,7 @@ namespace EmuLibrary
             0xb3667a2eU, 0xc4614ab8U, 0x5d681b02U, 0x2a6f2b94U, 0xb40bbe37U, 0xc30c8ea1U, 0x5a05df1bU, 0x2d02ef8dU
         };
     
-        private static uint crc_value = 0xffffffff;
+        private static ulong crc_value = 0xffffffff;
 
         public void CRC_Compute(CircularFrameBuffer.BufferEntry be)
         {
@@ -391,12 +383,12 @@ namespace EmuLibrary
             crc_value = (crc_value >> 8) ^ crc_table[j];
         }
 
-        public uint CRC_Finalise()
+        public ulong CRC_Finalise()
         {
             return crc_value ^ 0xffffffff;
         }
 
-        public uint CRC_LittleEndian()
+        public ulong CRC_LittleEndian()
         {
             return Emu.SwapEndian(CRC_Finalise());
         }
