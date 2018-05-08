@@ -87,8 +87,6 @@ class Reference_Switch_Lite_V2_Library : Emu
             metadata = ep.Metadata;
             dst_mac = ep.DestMac;
             src_mac = ep.SrcMac;
-            
-            
 
             // #############################
             // # Switch Logic -- START

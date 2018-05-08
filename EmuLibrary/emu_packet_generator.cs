@@ -17,7 +17,6 @@ namespace EmuLibrary
 
         private static readonly CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
 
-        private static readonly HeaderGen pg = new HeaderGen();
         private static readonly UDPParser up = new UDPParser();
         private static readonly EthernetParserGenerator ep = new EthernetParserGenerator();
         private static readonly IPv4ParserGenerator ip = new IPv4ParserGenerator();
@@ -51,7 +50,8 @@ namespace EmuLibrary
 
         private static void generate_packet()
         {
-            pg.WriteUDPHeader(cfb, up, ep, ip, InterfaceFunctions.PORT_BROADCAST);
+            SetPacketData();
+            HeaderGen.WriteUDPHeader(cfb, up, ep, ip, InterfaceFunctions.PORT_BROADCAST);
             cfb.ForwardPeek();
             cfb.PeekData.Tkeep = 0x0000002FF;
             cfb.PeekData.Tlast = true;
@@ -68,9 +68,7 @@ namespace EmuLibrary
         [Kiwi.HardwareEntryPoint()]
         private static int EntryPoint()
         {
-            SetPacketData();
             while (true) generate_packet();
-            
         }
 
         private static int Main()
