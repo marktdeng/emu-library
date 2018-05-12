@@ -148,8 +148,8 @@ namespace EmuLibrary
 
             Emu.m_axis_tkeep = cfb.PopData.Tkeep;
             Emu.m_axis_tlast = cfb.PopData.Tlast;
-            Emu.m_axis_tuser_hi = cfb.PopData.TuserHi;
             Emu.m_axis_tuser_low = cfb.PopData.TuserLow;
+            Emu.m_axis_tuser_hi = cfb.PopData.TuserHi;
 
             return ready;
         }
@@ -230,7 +230,7 @@ namespace EmuLibrary
             while (cont)
             {
                 if (cfb.CanPop(true))
-                {
+                {   
                     if (SendData(cfb, true))
                     {
                         crc.CRC_Compute(cfb.PopData);

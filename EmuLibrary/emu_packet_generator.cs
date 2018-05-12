@@ -57,7 +57,7 @@ namespace EmuLibrary
             cfb.PeekData.Tlast = true;
             cfb.WritePeek(cfb.PeekData);
 
-            //cfb.PrintContents();
+            cfb.PrintContents();
 
             CircularNetworkFunctions.SendWithFCS(cfb, crc);
 
@@ -68,12 +68,13 @@ namespace EmuLibrary
         [Kiwi.HardwareEntryPoint()]
         private static int EntryPoint()
         {
+            return 0;
             while (true) generate_packet();
         }
 
         private static int Main()
         {
-            //Emu.m_axis_tready = true;
+            Emu.m_axis_tready = true;
 
             SetPacketData();
             generate_packet();

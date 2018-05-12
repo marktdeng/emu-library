@@ -8,11 +8,24 @@
 
 namespace EmuLibrary
 {
+    public class MetadataParser
+    {
+        public ulong Metadata;
+        public ulong RecvInterface;
+        public ulong BroadcastInterfaces;
+
+        public int Parse(ulong tuserLow)
+        {
+            Metadata = tuserLow;
+            RecvInterface = tuserLow & Emu.DEFAULT_oqs;
+            BroadcastInterfaces = (RecvInterface ^ Emu.DEFAULT_oqs) << 8;
+        }
+    }
+    
     public class EthernetParserGenerator
     {
         public const ushort ETHERTYPE_IPV4 = 0x0008;
         public const ushort ETHERTYPE_IPV6 = 0xdd86;
-        public ulong BroadcastPorts;
         public ulong DestMac;
         public uint Ethertype;
         public bool EthHeaderRdy;
@@ -38,7 +51,6 @@ namespace EmuLibrary
             DestMac = tdata0 & 0xffffffffffff;
             SrcMac = ((tdata0 >> 48) & 0x00ffff) |
                      ((tdata1 & 0x00ffffffff) << 16);
-            BroadcastPorts = ((tuserLow & 0x00FF0000) ^ Emu.DEFAULT_oqs) << 8;
             Ethertype = (uint) ((tdata1 >> 32) & 0x00ffff);
             IsIPv4 = ((tdata1 >> 32) & 0x00ffff) == ETHERTYPE_IPV4 &&
                      ((tdata1 >> 52) & 0x0f) == 0x04; 
@@ -367,7 +379,7 @@ namespace EmuLibrary
                     PayloadLength = (uint) ((cfb.PeekData.Tdata2 >> 16) & 0x00ffff);
                     Protocol = (byte) ((cfb.PeekData.Tdata2 >> 32) & 0x00ff);
                     HopLimit = (byte) ((cfb.PeekData.Tdata2 >> 40) & 0x00ff);
-
+    
                     SrcIp1 = (cfb.PeekData.Tdata2 >> 48) & 0x00ffff;
                     SrcIp1 |= (cfb.PeekData.Tdata3 & 0x00ffffffffffff) << 16;
                     _tmp_src_ip_2 = (cfb.PeekData.Tdata3 >> 48) & 0x00ffff;
