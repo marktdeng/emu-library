@@ -74,10 +74,14 @@ namespace EmuLibrary
 
         private static int Main()
         {
-            Emu.m_axis_tready = true;
+            if (!Kiwi.inHardware())
+            {
+                Emu.m_axis_tready = true;
+            }
 
             SetPacketData();
             generate_packet();
+            
             //cfb.PrintContents();
             //cfb.ResetPeek();
             //ep.Parse(cfb);

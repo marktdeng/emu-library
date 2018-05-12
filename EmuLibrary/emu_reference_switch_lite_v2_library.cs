@@ -67,6 +67,8 @@ class Reference_Switch_Lite_V2_Library : Emu
     private static readonly CircularFrameBuffer cfb = new CircularFrameBuffer(BUF_SIZE);
 
     private static readonly EthernetParserGenerator ep = new EthernetParserGenerator();
+    
+    private static readonly MetadataParser mp = new MetadataParser();
 
     // This method describes the operations required to route the frames
     public static void switch_logic()
@@ -83,6 +85,7 @@ class Reference_Switch_Lite_V2_Library : Emu
             CircularNetworkFunctions.RecvOne(cfb, true, true);
 
             ep.Parse(cfb);
+            mp.Parse(cfb);
 
             metadata = ep.Metadata;
             dst_mac = ep.DestMac;
@@ -134,7 +137,7 @@ class Reference_Switch_Lite_V2_Library : Emu
 
             // If we have a LUT hit prepare the appropriate output port in the metadata, otherwise flood    
 
-            InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) OQ : (byte) ep.BroadcastPorts, cfb);
+            InterfaceFunctions.SetDestInterface(LUT_hit ? (byte) OQ : (byte) mp.BroadcastInterfaces, cfb);
 
             // Update entry
             if ( exist ) LUT[ptr] = (src_mac << 16) | ((metadata >> 16) & 0x00ff);

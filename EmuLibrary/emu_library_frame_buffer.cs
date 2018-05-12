@@ -6,6 +6,8 @@
 // Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
+using KiwiSystem;
+
 namespace EmuLibrary
 {
     public class CircularFrameBuffer

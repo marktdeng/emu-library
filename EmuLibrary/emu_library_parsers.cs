@@ -14,11 +14,18 @@ namespace EmuLibrary
         public ulong RecvInterface;
         public ulong BroadcastInterfaces;
 
+        public int Parse(CircularFrameBuffer cfb)
+        {
+            cfb.Peek();
+            return Parse(cfb.PeekData.TuserLow);
+        }
+
         public int Parse(ulong tuserLow)
         {
             Metadata = tuserLow;
             RecvInterface = tuserLow & Emu.DEFAULT_oqs;
             BroadcastInterfaces = (RecvInterface ^ Emu.DEFAULT_oqs) << 8;
+            return 0;
         }
     }
     

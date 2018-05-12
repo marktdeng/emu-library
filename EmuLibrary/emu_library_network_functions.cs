@@ -230,7 +230,7 @@ namespace EmuLibrary
             while (cont)
             {
                 if (cfb.CanPop(true))
-                {   
+                {
                     if (SendData(cfb, true))
                     {
                         crc.CRC_Compute(cfb.PopData);
@@ -278,7 +278,7 @@ namespace EmuLibrary
                         //Console.WriteLine($"{size}:{crc.CRC_LittleEndian():X16}");
 
                     }
-                    //Console.WriteLine($"{Emu.m_axis_tdata_0:X16},\n{Emu.m_axis_tdata_1:X16},\n{Emu.m_axis_tdata_2:X16},\n{Emu.m_axis_tdata_3:X16}");
+                    //System.Console.WriteLine($"{Emu.m_axis_tdata_0:X16},\n{Emu.m_axis_tdata_1:X16},\n{Emu.m_axis_tdata_2:X16},\n{Emu.m_axis_tdata_3:X16}");
                     Kiwi.Pause();
                 }
                 else
