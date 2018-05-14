@@ -4,6 +4,8 @@
 // All rights reserved
 //
 
+using System;
+
 namespace EmuLibrary
 {
 /*
@@ -29,17 +31,21 @@ namespace EmuLibrary
 
     public static class DebugFunctions
     {
-        public const byte PACKET_DROP = 0;
-        public const byte PACKET_BUFFER_FULL = 1;
-        public const byte PACKET_BUFFER_INVALID = 2;
-        public const byte SEND_NOT_READY = 3;
-        public const byte PARSE_FAIL = 4;
-        public const byte ILLEGAL_PACKET_FORMAT = 5;
-        public const byte EMPTY_PACKET = 6;
-        public const byte FIFO_FULL = 7;
-        public const byte FIFO_EMPTY = 8;
-        public const byte AXI_NOT_READY = 9;
-        public const byte AXI_NOT_VALID = 10;
+        public enum Errors : byte
+        {
+            PACKET_DROP,
+            PACKET_BUFFER_FULL,
+            PACKET_BUFFER_INVALID,
+            SEND_NOT_READY,
+            PARSE_FAIL,
+            ILLEGAL_PACKET_FORMAT,
+            EMPTY_PACKET,
+            FIFO_FULL,
+            FIFO_EMPTY,
+            AXI_NOT_READY,
+            AXI_NOT_VALID,
+        }
+
         private static bool interrupts_enabled;
         private static readonly bool enable_software_exceptions = false;
 
@@ -53,9 +59,9 @@ namespace EmuLibrary
             interrupts_enabled = false;
         }
 
-        public static void push_interrupt(byte errortype)
+        public static void push_interrupt(Errors errortype)
         {
-            if (interrupts_enabled) Emu.Interrupts = Emu.Interrupts | (1ul << errortype);
+            if (interrupts_enabled) Emu.Interrupts = Emu.Interrupts | (1ul << (byte) errortype);
         }
 
         public static void reset_interrupt()

@@ -144,7 +144,7 @@ namespace EmuLibrary
         {
             if (!CanPush())
             {
-                DebugFunctions.push_interrupt(DebugFunctions.FIFO_FULL);
+                DebugFunctions.push_interrupt(DebugFunctions.Errors.FIFO_FULL);
                 return false;
             }
 
@@ -191,7 +191,7 @@ namespace EmuLibrary
                 {
                     if (!_valid[peekloc])
                     {
-                        DebugFunctions.push_interrupt(DebugFunctions.PACKET_BUFFER_INVALID);
+                        DebugFunctions.push_interrupt(DebugFunctions.Errors.PACKET_BUFFER_INVALID);
                         return false;
                     }
 
@@ -206,15 +206,6 @@ namespace EmuLibrary
                     return true;
                 }
             }
-        }
-
-        /*
-         * Function: WritePeek
-         * Description: Same as UpdatePeek
-         */
-        public void WritePeek(BufferEntry be)
-        {
-            UpdatePeek(be);
         }
 
         /*

@@ -59,7 +59,7 @@ namespace EmuLibrary
             cfb.ForwardPeek();
             cfb.PeekData.Tkeep = 0x0000002FF;
             cfb.PeekData.Tlast = true;
-            cfb.WritePeek(cfb.PeekData);
+            cfb.UpdatePeek(cfb.PeekData);
 
             cfb.PrintContents();
 

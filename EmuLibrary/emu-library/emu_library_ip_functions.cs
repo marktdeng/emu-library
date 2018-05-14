@@ -103,7 +103,7 @@ namespace EmuLibrary
 
             if (check_ready && !Emu.axi_m_axis_tready)
             {
-                DebugFunctions.push_interrupt(DebugFunctions.SEND_NOT_READY);
+                DebugFunctions.push_interrupt(DebugFunctions.Errors.SEND_NOT_READY);
                 return false;
             }
 
@@ -124,7 +124,7 @@ namespace EmuLibrary
                 return true;
             }
 
-            DebugFunctions.push_interrupt(DebugFunctions.FIFO_FULL);
+            DebugFunctions.push_interrupt(DebugFunctions.Errors.FIFO_FULL);
             return false;
         }
 
@@ -150,7 +150,7 @@ namespace EmuLibrary
                 return data;
             }
 
-            DebugFunctions.push_interrupt(DebugFunctions.FIFO_EMPTY);
+            DebugFunctions.push_interrupt(DebugFunctions.Errors.FIFO_EMPTY);
             return 0;
         }
 

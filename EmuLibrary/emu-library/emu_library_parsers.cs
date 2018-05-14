@@ -288,9 +288,9 @@ namespace EmuLibrary
                     data_2 = cfb.PeekData.Tdata3 >> 48;
 
                     Version = (byte) ((cfb.PeekData.Tdata1 >> 52) & 0x0f);
-                    if (Version != 4) DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
+                    if (Version != 4) DebugFunctions.push_interrupt(DebugFunctions.Errors.ILLEGAL_PACKET_FORMAT);
                     IHL = (byte) ((cfb.PeekData.Tdata1 >> 48) & 0x0f);
-                    if (IHL < 5 || IHL > 8) DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
+                    if (IHL < 5 || IHL > 8) DebugFunctions.push_interrupt(DebugFunctions.Errors.ILLEGAL_PACKET_FORMAT);
                     DSCP = (byte) ((cfb.PeekData.Tdata1 >> 58) & 0x3F);
                     ECN = (byte) ((cfb.PeekData.Tdata1 >> 56) & 0x3);
                     TotalLength = (uint) (cfb.PeekData.Tdata2 & 0x00ffff);
@@ -527,7 +527,7 @@ namespace EmuLibrary
 
                 var linenum = offset / 64;
                 var lineoffset = offset % 64;
-                if (lineoffset % 8 != 0) DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
+                if (lineoffset % 8 != 0) DebugFunctions.push_interrupt(DebugFunctions.Errors.ILLEGAL_PACKET_FORMAT);
 
                 if (lineoffset <= 48)
                     switch (linenum)
@@ -564,7 +564,7 @@ namespace EmuLibrary
                                         (data >> (64 - lineoffset));
                             break;
                         case 3:
-                            DebugFunctions.push_interrupt(DebugFunctions.ILLEGAL_PACKET_FORMAT);
+                            DebugFunctions.push_interrupt(DebugFunctions.Errors.ILLEGAL_PACKET_FORMAT);
                             break;
                     }
 
