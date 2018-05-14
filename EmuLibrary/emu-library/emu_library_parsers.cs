@@ -577,9 +577,13 @@ namespace EmuLibrary
 
     public class TCPParser
     {
+        public uint SrcPort;
         public uint DestPort;
         public uint SeqNumber;
-        public uint SrcPort;
+        public uint AckNumber;
+        public byte DataOffset;
+        public uint WindowSize;
+        
 
         public byte Parse(CircularFrameBuffer cfb, uint ipHeaderLength, bool skip = false)
         {
@@ -591,20 +595,23 @@ namespace EmuLibrary
                 startloc++;
             }
 
-            ulong data0, data1;
+            ulong data0, data1, data2;
             switch (startloc)
             {
                 case 0:
                     data0 = cfb.PeekData.Tdata0;
                     data1 = cfb.PeekData.Tdata1;
+                    data2 = cfb.PeekData.Tdata2;
                     break;
                 case 1:
                     data0 = cfb.PeekData.Tdata1;
                     data1 = cfb.PeekData.Tdata2;
+                    data2 = cfb.PeekData.Tdata3;
                     break;
                 case 2:
                     data0 = cfb.PeekData.Tdata2;
                     data1 = cfb.PeekData.Tdata3;
+                    data2 = 0;
                     break;
                 default:
                     return 1;
@@ -619,6 +626,7 @@ namespace EmuLibrary
             {
                 SrcPort = (uint) (data0 >> offset);
                 data0 = data1;
+                data1 = data2;
                 SrcPort |= (uint) ((uint) data0 & (0xFFFF >> offset)) << offset;
                 offset = 64 - offset;
             }
@@ -632,9 +640,56 @@ namespace EmuLibrary
             {
                 DestPort = (uint) (data0 >> offset);
                 data0 = data1;
+                data1 = data2;
                 DestPort |= (uint) ((uint) data0 & (0xFFFF >> offset)) << offset;
                 offset = 64 - offset;
             }
+
+            if (offset <= 32)
+            {
+                SeqNumber = (uint) (data0 >> offset) & 0xFFFFFFFF;
+                offset += 32;
+            }
+            else
+            {
+                SeqNumber = (uint) (data0 >> offset);
+                data0 = data1;
+                data1 = data2;
+                SeqNumber |= (uint) ((uint) data0 & (0xFFFFFFFF >> offset)) << offset;
+                offset = 64 - offset;
+            }
+            
+            if (offset <= 48)
+            {
+                uint tmp = (uint) (data0 >> offset) & 0xFFFF;
+                DataOffset = (byte) ((tmp & 0xF0) >> 4);
+                
+                offset += 16;
+            }
+            else
+            {
+                uint tmp = (uint) (data0 >> offset);
+                data0 = data1;
+                data1 = data2;
+                tmp |= (uint) ((uint) data0 & (0xFFFF >> offset)) << offset;
+                offset = 64 - offset;
+                DataOffset = (byte) ((tmp & 0xF0) >> 4);
+            }
+            
+            if (offset <= 48)
+            {
+                WindowSize = (uint) (data0 >> offset) & 0xFFFF;
+                offset += 16;
+            }
+            else
+            {
+                WindowSize = (uint) (data0 >> offset);
+                data0 = data1;
+                data1 = data2;
+                WindowSize |= (uint) ((uint) data0 & (0xFFFF >> offset)) << offset;
+                offset = 64 - offset;
+            }
+
 
             return 0;
         }

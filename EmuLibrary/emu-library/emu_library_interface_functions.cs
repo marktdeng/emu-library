@@ -35,7 +35,7 @@ namespace EmuLibrary
 
     public class BusWidthConverter
     {
-        private readonly byte[] buffer = new byte[16];
+        private readonly byte[] _buffer = new byte[16];
         private byte _readpt;
         private byte _size;
         private byte _writept;
@@ -45,7 +45,8 @@ namespace EmuLibrary
             if (length > 8) length = 8;
             while (length >= 1)
             {
-                buffer[_writept++] = (byte) data;
+                _buffer[_writept] = (byte) data;
+                _writept = (byte) ((_writept + 1) % 16);
                 data >>= 8;
                 length--;
                 _size++;
@@ -57,7 +58,8 @@ namespace EmuLibrary
             if (length > 4) length = 4;
             while (length >= 1)
             {
-                buffer[_writept++] = (byte) data;
+                _buffer[_writept] = (byte) data;
+                _writept = (byte) ((_writept + 1) % 16);
                 data >>= 8;
                 length--;
                 _size++;
@@ -69,7 +71,8 @@ namespace EmuLibrary
             if (length > 2) length = 2;
             while (length >= 1)
             {
-                buffer[_writept++] = (byte) data;
+                _buffer[_writept] = (byte) data;
+                _writept = (byte) ((_writept + 1) % 16);
                 data >>= 8;
                 length--;
                 _size++;
@@ -78,7 +81,8 @@ namespace EmuLibrary
 
         public void Push(byte data, byte length = 1)
         {
-            buffer[_writept++] = data;
+            _buffer[_writept] = data;
+            _writept = (byte) ((_writept + 1) % 16);
             data >>= 8;
             _size++;
         }
@@ -86,54 +90,67 @@ namespace EmuLibrary
         public byte PopByte()
         {
             if (_size >= 1)
-                return buffer[_readpt++];
+            {
+                _size--;
+                byte data = _buffer[_readpt];
+                _readpt = (byte) ((_readpt + 1) % 16);
+                return data;
+            }
+
             return 0;
         }
 
-        public ulong PopULong()
+        public ulong PopULong(byte length = 8)
         {
-            if (_size >= 8)
+            if (length > 8) length = 8;
+            if (_size >= length)
             {
-                ulong temp;
-                temp = PopByte();
-                temp |= (ulong) PopByte() << 8;
-                temp |= (ulong) PopByte() << 16;
-                temp |= (ulong) PopByte() << 24;
-                temp |= (ulong) PopByte() << 32;
-                temp |= (ulong) PopByte() << 40;
-                temp |= (ulong) PopByte() << 48;
-                temp |= (ulong) PopByte() << 56;
+                ulong temp = 0;
+                byte offset = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    temp = (ulong) PopByte() << offset;
+                    offset += 8;
+                }
                 return temp;
             }
 
             return 0;
         }
 
-        public uint PopUInt()
+        public uint PopUInt(byte length = 4)
         {
-            if (_size >= 8)
+            if (length > 4) length = 4;
+            if (_size >= length)
             {
-                uint temp;
-                temp = PopByte();
-                temp |= (uint) PopByte() << 8;
-                temp |= (uint) PopByte() << 16;
-                temp |= (uint) PopByte() << 24;
+                uint temp = 0;
+                byte offset = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    temp = (uint) PopByte() << offset;
+                    offset += 8;
+                }
                 return temp;
             }
 
             return 0;
         }
 
-        public uint PopUShort()
+        public ushort PopUShort(byte length = 2)
         {
-            if (_size >= 8)
+            if (length > 2) length = 2;
+            if (_size >= length)
             {
-                ushort temp;
-                temp = PopByte();
-                temp |= (ushort) (PopByte() << 8);
+                ushort temp = 0;
+                byte offset = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    temp = (ushort) (PopByte() << offset);
+                    offset += 8;
+                }
                 return temp;
             }
-
+            
             return 0;
         }
     }

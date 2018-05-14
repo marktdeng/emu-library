@@ -8,7 +8,7 @@
 
 namespace EmuLibrary
 {
-    public class HeaderGen
+    public static class HeaderGen
     {
         public static void WriteIPv4EthernetHeader(CircularFrameBuffer cfb, EthernetParserGenerator ep, IPv4ParserGenerator ip,
             byte ports)

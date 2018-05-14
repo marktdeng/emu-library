@@ -1,4 +1,6 @@
-﻿using KiwiSystem;
+﻿using System.Linq.Expressions;
+using System.Security.Policy;
+using KiwiSystem;
 
 namespace EmuLibrary
 {
@@ -51,7 +53,9 @@ namespace EmuLibrary
         private static void generate_packet()
         {
             SetPacketData();
+            
             HeaderGen.WriteUDPHeader(cfb, up, ep, ip, InterfaceFunctions.PORT_BROADCAST);
+            
             cfb.ForwardPeek();
             cfb.PeekData.Tkeep = 0x0000002FF;
             cfb.PeekData.Tlast = true;
@@ -68,8 +72,12 @@ namespace EmuLibrary
         [Kiwi.HardwareEntryPoint()]
         private static int EntryPoint()
         {
-            return 0;
-            while (true) generate_packet();
+            CircularNetworkFunctions.RecvOne(cfb, true, false);
+            
+            while (true)
+            {
+                generate_packet();
+            }
         }
 
         private static int Main()
