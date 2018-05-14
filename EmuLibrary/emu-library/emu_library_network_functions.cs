@@ -112,7 +112,7 @@ namespace EmuLibrary
         {
             if (cfb.CanPop() && (!checkready || Emu.m_axis_tready))
             {
-                SendData(cfb, movepeek);
+                SetData(cfb, movepeek);
 
                 var done = cfb.PopData.Tlast;
 
@@ -135,10 +135,11 @@ namespace EmuLibrary
             return 1U;
         }
 
-        private static bool SendData(CircularFrameBuffer cfb, bool movepeek)
+        private static bool SetData(CircularFrameBuffer cfb, bool movepeek = false, bool wait = false)
         {
             bool ready = Emu.m_axis_tready;
-            if (ready) cfb.Pop(movepeek);
+
+            if (ready || wait) cfb.Pop(movepeek);
 
             Emu.m_axis_tvalid = true;
             Emu.m_axis_tdata_0 = cfb.PopData.Tdata0;
@@ -150,6 +151,15 @@ namespace EmuLibrary
             Emu.m_axis_tlast = cfb.PopData.Tlast;
             Emu.m_axis_tuser_low = cfb.PopData.TuserLow;
             Emu.m_axis_tuser_hi = cfb.PopData.TuserHi;
+            
+            if (wait)
+            {
+                while (!ready)
+                {
+                    Kiwi.Pause();
+                    ready = Emu.m_axis_tready;
+                }
+            }
 
             return ready;
         }
@@ -231,7 +241,7 @@ namespace EmuLibrary
             {
                 if (cfb.CanPop(true))
                 {
-                    if (SendData(cfb, true))
+                    if (SetData(cfb, true, true))
                     {
                         crc.CRC_Compute(cfb.PopData);
                         cont = !cfb.PopData.Tlast;
