@@ -69,6 +69,7 @@ namespace EmuLibrary
             {
                 while (!Emu.s_axis_tvalid)
                 {
+                    Emu.Status = 1;
                     Emu.s_axis_tready = true;
                     Kiwi.Pause();
                 }
@@ -80,6 +81,8 @@ namespace EmuLibrary
 
                 cfb.Push(Emu.s_axis_tkeep, Emu.s_axis_tlast, Emu.s_axis_tdata_0, Emu.s_axis_tdata_1,
                     Emu.s_axis_tdata_2, Emu.s_axis_tdata_3, Emu.s_axis_tuser_hi, Emu.s_axis_tuser_low);
+                
+                Emu.Status = 2;
                 if (stop) Reset();
                 Kiwi.Pause();
                 return true;
@@ -116,6 +119,7 @@ namespace EmuLibrary
                 SetData(cfb, movepeek);
 
                 var done = cfb.PopData.Tlast;
+                Emu.Status = 3;
 
                 Kiwi.Pause();
 
@@ -171,6 +175,7 @@ namespace EmuLibrary
          */
         private static void Reset()
         {
+            Emu.s_axis_tready = false;
             Emu.m_axis_tvalid = false;
             Emu.m_axis_tlast = false;
             Emu.m_axis_tdata_0 = 0x0;
@@ -180,7 +185,6 @@ namespace EmuLibrary
             Emu.m_axis_tkeep = 0x0;
             Emu.m_axis_tuser_hi = 0x0;
             Emu.m_axis_tuser_low = 0x0;
-            Emu.s_axis_tready = false;
         }
 
         /*
@@ -206,6 +210,7 @@ namespace EmuLibrary
             var done = false;
             do
             {
+                Emu.Status = 4;
                 Emu.m_axis_tvalid = Emu.s_axis_tvalid;
 
                 Emu.s_axis_tready = Emu.m_axis_tready;
