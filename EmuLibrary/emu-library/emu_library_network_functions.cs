@@ -35,8 +35,9 @@ namespace EmuLibrary
                     psize = cnt++;
                     // Condition to stop receiving data
                     doneReading = Emu.s_axis_tlast || !Emu.s_axis_tvalid;
-                    // Create backpresure to whatever sends data to us
+                    
                     Emu.s_axis_tready = !Emu.s_axis_tlast;
+                    
                     if (!cfb.CanPush()) // Buffer is full, stop receiving data
                         Emu.s_axis_tready = false;
                 }
@@ -79,8 +80,8 @@ namespace EmuLibrary
 
                 cfb.Push(Emu.s_axis_tkeep, Emu.s_axis_tlast, Emu.s_axis_tdata_0, Emu.s_axis_tdata_1,
                     Emu.s_axis_tdata_2, Emu.s_axis_tdata_3, Emu.s_axis_tuser_hi, Emu.s_axis_tuser_low);
-                Kiwi.Pause();
                 if (stop) Reset();
+                Kiwi.Pause();
                 return true;
             }
 
@@ -107,7 +108,7 @@ namespace EmuLibrary
         * Function: SendOne
         * Description: Send a single segment of the buffered ethernet frame.
         */       
-        private static uint SendOne(CircularFrameBuffer cfb, bool stop = true, bool movepeek = false,
+        public static uint SendOne(CircularFrameBuffer cfb, bool stop = true, bool movepeek = false,
             bool checkready = true)
         {
             if (cfb.CanPop() && (!checkready || Emu.m_axis_tready))

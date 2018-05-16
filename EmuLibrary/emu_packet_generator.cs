@@ -69,15 +69,12 @@ namespace EmuLibrary
         }
 
 
-        [Kiwi.HardwareEntryPoint()]
+        [Kiwi.HardwareEntryPoint]
         private static int EntryPoint()
         {
             CircularNetworkFunctions.RecvOne(cfb, true, false);
-            
-            while (true)
-            {
-                generate_packet();
-            }
+            CircularNetworkFunctions.SendOne(cfb, true, true, false);
+            while (true) generate_packet();
         }
 
         private static int Main()

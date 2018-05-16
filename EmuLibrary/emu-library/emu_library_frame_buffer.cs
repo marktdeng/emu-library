@@ -289,116 +289,21 @@ namespace EmuLibrary
 
         public class BufferEntry
         {
-            private ulong _tdata0;
+            public uint Tkeep;
 
-            private ulong _tdata1;
+            public bool Tlast;
 
-            private ulong _tdata2;
+            public ulong Tdata0;
 
-            private ulong _tdata3;
-            private uint _tkeep;
+            public ulong Tdata1;
 
-            private bool _tlast;
+            public ulong Tdata2;
 
-            private ulong _tuserHi;
+            public ulong Tdata3;
 
-            private ulong _tuserLow;
+            public ulong TuserHi;
 
-            public uint Tkeep
-            {
-                get { return _tkeep; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tkeep = value;
-                    }
-                }
-            }
-
-            public bool Tlast
-            {
-                get { return _tlast; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tlast = value;
-                    }
-                }
-            }
-
-            public ulong Tdata0
-            {
-                get { return _tdata0; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tdata0 = value;
-                    }
-                }
-            }
-
-            public ulong Tdata1
-            {
-                get { return _tdata1; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tdata1 = value;
-                    }
-                }
-            }
-
-            public ulong Tdata2
-            {
-                get { return _tdata2; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tdata2 = value;
-                    }
-                }
-            }
-
-            public ulong Tdata3
-            {
-                get { return _tdata3; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tdata3 = value;
-                    }
-                }
-            }
-
-            public ulong TuserHi
-            {
-                get { return _tuserHi; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tuserHi = value;
-                    }
-                }
-            }
-
-            public ulong TuserLow
-            {
-                get { return _tuserLow; }
-                set
-                {
-                    //lock (this)
-                    {
-                        _tuserLow = value;
-                    }
-                }
-            }
+            public ulong TuserLow;
 
             /*
              * Function: Update
@@ -430,14 +335,14 @@ namespace EmuLibrary
             {
                 //lock (this)
                 {
-                    _tkeep = 0;
-                    _tlast = false;
-                    _tdata0 = 0;
-                    _tdata1 = 0;
-                    _tdata2 = 0;
-                    _tdata3 = 0;
-                    _tuserHi = 0;
-                    _tuserLow = 0;
+                    Tkeep = 0;
+                    Tlast = false;
+                    Tdata0 = 0;
+                    Tdata1 = 0;
+                    Tdata2 = 0;
+                    Tdata3 = 0;
+                    TuserHi = 0;
+                    TuserLow = 0;
                 }
             }
         }
