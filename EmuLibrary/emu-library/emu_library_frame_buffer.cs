@@ -154,7 +154,7 @@ namespace EmuLibrary
             }
 
             //lock (_lck)
-            {
+            //{
                 if (pstart) _curstart = writeloc;
 
                 _tkeep[writeloc] = tkeep;
@@ -167,11 +167,11 @@ namespace EmuLibrary
                 _tuser_low[writeloc] = tuser_low;
                 _pstart[writeloc] = _curstart;
                 _valid[writeloc] = true;
-                writeloc++;
                 Count++;
-                if (writeloc >= Bufsize) writeloc = 0;
-            }
+                writeloc = (writeloc + 1) % Bufsize;
+            //}
 
+            Emu.debug_reg = Count;
             return true;
         }
 
@@ -191,9 +191,9 @@ namespace EmuLibrary
         public bool UpdatePeek(BufferEntry be)
         {
             //lock (_lck)
-            {
+            //{
                 //lock (PeekData)
-                {
+                //{
                     if (!_valid[peekloc])
                     {
                         DebugFunctions.push_interrupt(DebugFunctions.Errors.PACKET_BUFFER_INVALID);
@@ -209,8 +209,8 @@ namespace EmuLibrary
                     _tuser_hi[peekloc] = be.TuserHi;
                     _tuser_low[peekloc] = be.TuserLow;
                     return true;
-                }
-            }
+                //}
+            //}
         }
 
         /*
@@ -220,24 +220,26 @@ namespace EmuLibrary
          */
         public bool Pop(bool movePeek = false)
         {
-            if (!CanPop(movePeek)) return false;
+            Emu.PktOut += 1; 
+            //if (!CanPop(movePeek)) return false;
             //lock (_lck)
-            {
+            //{
                 //lock (PopData)
-                {
+                //{
                     PopData.Update(_tkeep[poploc], _tlast[poploc], _tdata_0[poploc], _tdata_1[poploc], _tdata_2[poploc],
                         _tdata_3[poploc], _tuser_hi[poploc], _tuser_low[poploc]);
 
                     _valid[poploc] = false;
 
                     poploc = (poploc + 1) % Bufsize;
-                    Count--;
+                    Count -= 1;
 
                     if (movePeek) peekloc = poploc;
-
+                    Emu.PktOut += 0x1000; 
+                    Emu.debug_reg = Count;
                     return true;
-                }
-            }
+                //}
+            //}
         }
 
         /*
