@@ -29,14 +29,23 @@ namespace EmuLibrary
             {
                 if (Emu.s_axis_tvalid && cfb.CanPush() && Emu.s_axis_tready) // Receive data
                 {
-                    cfb.Push(Emu.s_axis_tkeep, Emu.s_axis_tlast, Emu.s_axis_tdata_0, Emu.s_axis_tdata_1,
-                        Emu.s_axis_tdata_2, Emu.s_axis_tdata_3, Emu.s_axis_tuser_hi, Emu.s_axis_tuser_low);
+                    cfb.PushData.Tkeep = Emu.s_axis_tkeep;
+                    cfb.PushData.Tlast = Emu.s_axis_tlast;
+                    cfb.PushData.Tdata0 = Emu.s_axis_tdata_0;
+                    cfb.PushData.Tdata1 = Emu.s_axis_tdata_1;
+                    cfb.PushData.Tdata2 = Emu.s_axis_tdata_2;
+                    cfb.PushData.Tdata3 = Emu.s_axis_tdata_3;
+                    cfb.PushData.TuserHi = Emu.s_axis_tuser_hi;
+                    cfb.PushData.TuserLow = Emu.s_axis_tuser_low;
+                    
+                    Emu.s_axis_tready = !Emu.s_axis_tlast;
+
+                    cfb.Push(cfb.PushData);
 
                     psize = cnt++;
                     // Condition to stop receiving data
                     doneReading = Emu.s_axis_tlast || !Emu.s_axis_tvalid;
                     
-                    Emu.s_axis_tready = !Emu.s_axis_tlast;
                     
                     if (!cfb.CanPush()) // Buffer is full, stop receiving data
                         Emu.s_axis_tready = false;
@@ -50,7 +59,7 @@ namespace EmuLibrary
                     Emu.s_axis_tready = true;
                 }
 
-                Kiwi.Pause();
+                //Kiwi.Pause();
             }
 
             Emu.PktIn++;
@@ -65,26 +74,33 @@ namespace EmuLibrary
          */
         public static bool RecvOne(CircularFrameBuffer cfb, bool stop, bool wait = false)
         {
-            if (wait)
+            Emu.s_axis_tready = false;
+            Emu.Status = 1;
+            while (wait)
             {
-                while (!Emu.s_axis_tvalid)
-                {
-                    Emu.Status = 1;
-                    Emu.s_axis_tready = true;
-                    Kiwi.Pause();
-                }
+                wait = !Emu.s_axis_tvalid;
             }
+            bool cont = !stop;
             
             if (Emu.s_axis_tvalid && cfb.CanPush())
             {
-                Emu.s_axis_tready = true;
+		Emu.s_axis_tready = true;
+                cfb.PushData.Tkeep = Emu.s_axis_tkeep;
+                cfb.PushData.Tlast = Emu.s_axis_tlast;
+                cfb.PushData.Tdata0 = Emu.s_axis_tdata_0;
+                cfb.PushData.Tdata1 = Emu.s_axis_tdata_1;
+                cfb.PushData.Tdata2 = Emu.s_axis_tdata_2;
+                cfb.PushData.Tdata3 = Emu.s_axis_tdata_3;
+                cfb.PushData.TuserHi = Emu.s_axis_tuser_hi;
+                cfb.PushData.TuserLow = Emu.s_axis_tuser_low;
+                
+                Emu.s_axis_tready = cont;
 
-                cfb.Push(Emu.s_axis_tkeep, Emu.s_axis_tlast, Emu.s_axis_tdata_0, Emu.s_axis_tdata_1,
-                    Emu.s_axis_tdata_2, Emu.s_axis_tdata_3, Emu.s_axis_tuser_hi, Emu.s_axis_tuser_low);
+                cfb.Push(cfb.PushData);
                 
                 Emu.Status = 2;
-                if (stop) Reset();
-                Kiwi.Pause();
+                
+                //Kiwi.Pause();
                 return true;
             }
 
@@ -114,9 +130,10 @@ namespace EmuLibrary
         public static uint SendOne(CircularFrameBuffer cfb, bool stop = true, bool movepeek = false,
             bool checkready = true)
         {
-            if (cfb.CanPop() && (!checkready || Emu.m_axis_tready))
+            if (cfb.CanPop(movepeek) && (!checkready || Emu.m_axis_tready))
             {
-                SetData(cfb, movepeek);
+                Emu.Status = 11;
+                SetData(cfb, movepeek, true);
 
                 var done = cfb.PopData.Tlast;
                 Emu.Status = 3;
@@ -128,25 +145,30 @@ namespace EmuLibrary
                 if (done)
                 {
                     Emu.PktOut++;
+                    Emu.Status = 12;
                     return 2U;
                 }
-
+                Emu.Status = 13;
                 return 0U;
             }
 
-            if (!cfb.CanPop()) return 3U;
+            Emu.Status = 14;
 
-            Reset();
-            return 1U;
+            if (stop) Reset();
+
+            return 3U;
         }
 
-        private static bool SetData(CircularFrameBuffer cfb, bool movepeek = false, bool wait = false)
+        private static bool SetData(CircularFrameBuffer cfb, bool movepeek = false, bool wait = false, bool valid = true)
         {
             bool ready = Emu.m_axis_tready;
 
-            if (ready || wait) cfb.Pop(movepeek);
+            if (ready || wait) 
+            {
+                cfb.Pop(movepeek);
+            }
 
-            Emu.m_axis_tvalid = true;
+            Emu.m_axis_tvalid = valid;
             Emu.m_axis_tdata_0 = cfb.PopData.Tdata0;
             Emu.m_axis_tdata_1 = cfb.PopData.Tdata1;
             Emu.m_axis_tdata_2 = cfb.PopData.Tdata2;
@@ -159,14 +181,19 @@ namespace EmuLibrary
             
             if (wait)
             {
-                while (!ready)
-                {
-                    Kiwi.Pause();
-                    ready = Emu.m_axis_tready;
-                }
+                WaitReady();
             }
 
             return ready;
+        }
+
+        
+        private static void WaitReady()
+        {
+            while (!Emu.m_axis_tready)
+            {
+                Kiwi.Pause();
+            }
         }
 
         /*
@@ -194,7 +221,15 @@ namespace EmuLibrary
         public static void SendAndCut(CircularFrameBuffer cfb)
         {
             var status = 0U;
-            while (status <= 1) status = SendOne(cfb, false, true);
+            if (cfb.CanPop(true)) {Emu.Interrupts = 1;}
+            else {Emu.Interrupts = 2;}
+
+            Emu.debug_reg = cfb.Count; 
+
+            while (status <= 1)
+            {
+                status = SendOne(cfb, false, true, false);
+            }
 
             if (status == 2)
                 Reset();
@@ -227,11 +262,11 @@ namespace EmuLibrary
                 Emu.m_axis_tuser_low = 0U;
 
                 done = Emu.s_axis_tlast && Emu.s_axis_tvalid;
-
+                
                 Kiwi.Pause();
+               
                 Emu.s_axis_tready = false;
                 Emu.m_axis_tvalid = false;
-                Kiwi.Pause();
             } while (!done);
 
             Emu.PktOut++;
@@ -252,7 +287,7 @@ namespace EmuLibrary
             {
                 if (cfb.CanPop(true))
                 {
-                    if (SetData(cfb, true, true))
+                    if (SetData(cfb, true, false, false))
                     {
                         crc.CRC_Compute(cfb.PopData);
                         cont = !cfb.PopData.Tlast;
@@ -263,26 +298,26 @@ namespace EmuLibrary
                         var size = (int) NumSize(cfb.PopData.Tkeep);
                         if (size >= 24)
                         {
-                            Emu.m_axis_tdata_3 = cfb.PopData.Tdata3 | (crc.CRC_LittleEndian() << ((size - 24) * 8));
+                            Emu.m_axis_tdata_3 = cfb.PopData.Tdata3 | (crc.CRC_LittleEndian() << ((size % 8) * 8));
                             
                         }
                         else if (size > 20)
                         {
                             Emu.m_axis_tdata_3 = cfb.PopData.Tdata3 | (crc.CRC_LittleEndian() >> ((24 - size) * 8));
-                            Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() << ((size - 16) * 8));
+                            Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() << ((size % 8) * 8));
                         }
                         else if (size >= 16)
                         {
-                            Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() >> ((size - 16) * 8));
+                            Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() >> ((size % 8) * 8));
                         }
                         else if (size > 12)
                         {
                             Emu.m_axis_tdata_2 = cfb.PopData.Tdata2 | (crc.CRC_LittleEndian() >> ((16 - size) * 8));
-                            Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | (crc.CRC_LittleEndian() << (size * 8));
+                            Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | (crc.CRC_LittleEndian() << ((size % 8) * 8));
                         }
                         else if (size >= 8)
                         {
-                            Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | (crc.CRC_LittleEndian() << (size * 8));
+                            Emu.m_axis_tdata_1 = cfb.PopData.Tdata1 | (crc.CRC_LittleEndian() << ((size % 8) * 8));
                         }
                         else if (size > 4)
                         {
@@ -294,13 +329,17 @@ namespace EmuLibrary
                             Emu.m_axis_tdata_0 = cfb.PopData.Tdata0 | (crc.CRC_LittleEndian() << (size * 8));
                         }
 
+                        Emu.PktIn = (uint) size;
+
                         Emu.m_axis_tkeep = Emu.m_axis_tkeep << 4 | 0xF;
                         
                         //Console.WriteLine($"{size}:{crc.CRC_LittleEndian():X16}");
 
                     }
+                    Emu.m_axis_tvalid = true;
+                    WaitReady();
                     //System.Console.WriteLine($"{Emu.m_axis_tdata_0:X16},\n{Emu.m_axis_tdata_1:X16},\n{Emu.m_axis_tdata_2:X16},\n{Emu.m_axis_tdata_3:X16}");
-                    Kiwi.Pause();
+                    //Kiwi.Pause();
                 }
                 else
                 {
