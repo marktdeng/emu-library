@@ -195,7 +195,7 @@ namespace EmuLibrary
                      ((ulong) TotalLength << 16) | ((ulong) Identification << 32) | ((ulong) Flags << 53) |
                      ((ulong) FragmentOffset << 48);
 
-            data_1 = TTL | ((ulong) Protocol << 8) | (((ulong) HeaderChecksum) << 16) | (SrcIp << 32);
+            data_1 = TTL | (((ulong) Protocol) << 8) | (((ulong) HeaderChecksum) << 16) | (SrcIp << 32);
 
             data_2 = DestIp;
         }

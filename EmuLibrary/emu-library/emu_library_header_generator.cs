@@ -6,6 +6,8 @@
 //	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
+using KiwiSystem;
+
 namespace EmuLibrary
 {
     public static class HeaderGen
@@ -34,17 +36,22 @@ namespace EmuLibrary
         public static void WriteUDPHeader(CircularFrameBuffer cfb, UDPParser up, EthernetParserGenerator ep,
             IPv4ParserGenerator ip, byte ports)
         {
+            Emu.Status = 0xff0;
             ip.Protocol = 17;
             ip.AssembleHeader();
-            ip.HeaderChecksum = ip.CalculateCheckSum();
-            ip.AssembleHeader();
+            //Emu.PktIn = ip.CalculateCheckSum();
+            //ip.HeaderChecksum = ip.CalculateCheckSum();
+            //ip.AssembleHeader();
             ep.WriteToBuffer(cfb.PushData);
             ip.WriteToBuffer(cfb.PushData, 0);
 
             InterfaceFunctions.SetDestInterface(ports, cfb.PushData);
+            cfb.PushData.Tkeep = 0xFFFFFFFF;
+            cfb.PushData.Tlast = false;
+            Kiwi.Pause();
             
             cfb.Push(cfb.PushData, true);
-
+            Emu.Status = 0xff1;
             cfb.ResetPeek();            
 
             cfb.PushData.Reset();
@@ -52,10 +59,11 @@ namespace EmuLibrary
             ip.WriteToBuffer(cfb.PushData, 1);
 
             up.WriteToBuffer(cfb.PushData, (byte) (16 + (ip.IHL - 5) * 32));
-            cfb.PushData.Tkeep = 0x0000002FF;
+            cfb.PushData.Tkeep = 0x0000003FF;
             cfb.PushData.Tlast = true;
-
+            Kiwi.Pause();
             cfb.Push(cfb.PushData);
+            Emu.Status = 0xff2;
         }
     }
 }
