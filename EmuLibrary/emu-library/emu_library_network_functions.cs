@@ -211,6 +211,7 @@ namespace EmuLibrary
             do
             {
                 Emu.Status = 4;
+
                 Emu.m_axis_tvalid = Emu.s_axis_tvalid;
 
                 Emu.s_axis_tready = Emu.m_axis_tready;
@@ -225,14 +226,18 @@ namespace EmuLibrary
                 Emu.m_axis_tuser_hi = 0U;
                 Emu.m_axis_tuser_low = 0U;
 
-                done = Emu.s_axis_tlast && Emu.s_axis_tvalid && Emu.m_axis_tready;
+                done = Emu.s_axis_tlast && Emu.s_axis_tvalid;
 
+                Kiwi.Pause();
+                Emu.s_axis_tready = false;
+                Emu.m_axis_tvalid = false;
                 Kiwi.Pause();
             } while (!done);
 
             Emu.PktOut++;
 
             Reset();
+            Kiwi.Pause();
         }
 
         /*

@@ -31,7 +31,7 @@ namespace EmuLibrary
         private uint _curstart;
 
         public uint Bufsize;
-        private uint count;
+        public uint Count { get; private set; }
         private uint peekloc;
         private uint poploc;
         private uint writeloc;
@@ -66,7 +66,7 @@ namespace EmuLibrary
          */
         public bool CanPush()
         {
-            return count < Bufsize;
+            return Count < Bufsize;
         }
 
         /*
@@ -77,8 +77,13 @@ namespace EmuLibrary
         public bool CanPop(bool movePeek = false)
         {
             if (movePeek)
-                return count > 0;
-            return count > 0 && poploc != peekloc;
+            {
+                return Count > 0;
+            }
+            else
+            {
+                return Count > 0 && poploc != peekloc;
+            }
         }
 
         /*
@@ -163,7 +168,7 @@ namespace EmuLibrary
                 _pstart[writeloc] = _curstart;
                 _valid[writeloc] = true;
                 writeloc++;
-                count++;
+                Count++;
                 if (writeloc >= Bufsize) writeloc = 0;
             }
 
@@ -226,7 +231,7 @@ namespace EmuLibrary
                     _valid[poploc] = false;
 
                     poploc = (poploc + 1) % Bufsize;
-                    count--;
+                    Count--;
 
                     if (movePeek) peekloc = poploc;
 

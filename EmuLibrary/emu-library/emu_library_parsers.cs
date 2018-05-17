@@ -195,7 +195,7 @@ namespace EmuLibrary
                      ((ulong) TotalLength << 16) | ((ulong) Identification << 32) | ((ulong) Flags << 53) |
                      ((ulong) FragmentOffset << 48);
 
-            data_1 = TTL | ((ulong) Protocol << 8) | ((ulong) HeaderChecksum << 16) | (SrcIp << 32);
+            data_1 = TTL | ((ulong) Protocol << 8) | (((ulong) HeaderChecksum) << 16) | (SrcIp << 32);
 
             data_2 = DestIp;
         }
@@ -336,7 +336,7 @@ namespace EmuLibrary
         }
 
 
-        public ushort CalculateCheckSum(bool includeHeader = false)
+        public uint CalculateCheckSum(bool includeHeader = false)
         {
             uint result = 0;
             for (var i = 0; i < 4; i++)
@@ -351,7 +351,7 @@ namespace EmuLibrary
 
             while (result > 0xffff) result = (result & 0xffff) + ((result >> 16) & 0xffff);
 
-            return (ushort) (result ^ 0xffff);
+            return (result ^ 0xffff) & 0xFFFF;
         }
 
         public bool VerifyCheckSum()
