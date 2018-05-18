@@ -1,12 +1,18 @@
-﻿using System.Linq.Expressions;
-using System.Security.Policy;
+﻿// Emu packet generator test engine
+//
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+// All rights reserved
+//
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+//
+
 using KiwiSystem;
 
 namespace EmuLibrary
 {
     public class emu_packet_generator : Emu
     {
-        private const uint BUF_SIZE = 200U; // Max frame size = 1526 Bytes ~ 191x8Bxmd entries
+        private const uint BUF_SIZE = 20U; // Max frame size = 1526 Bytes ~ 191x8Bxmd entries
         private const ulong DEST_ADDRESS = 0xabcdef012345;
         private const ulong SRC_ADDRESS = 0x559c48d25a9f;
 
@@ -47,34 +53,34 @@ namespace EmuLibrary
             ip.Protocol = 0;
             ip.SrcIp = SRC_IP;
             ip.DestIp = DEST_IP;
-            ip.HeaderChecksum = ip.CalculateCheckSum();
+            ip.HeaderChecksum = 0xA8C054FA;
         }
 
         private static void generate_packet()
         {
             SetPacketData();
-            
+
             HeaderGen.WriteUDPHeader(cfb, up, ep, ip, InterfaceFunctions.PORT_BROADCAST);
+
+            if (!Kiwi.inHardware())
+            {
+                cfb.PrintContents();
+            }
             
-            cfb.ForwardPeek();
-            cfb.PeekData.Tkeep = 0x0000002FF;
-            cfb.PeekData.Tlast = true;
-            cfb.UpdatePeek(cfb.PeekData);
-
-            cfb.PrintContents();
-
             CircularNetworkFunctions.SendWithFCS(cfb, crc);
 
             Kiwi.Pause();
         }
 
-
         [Kiwi.HardwareEntryPoint]
         private static int EntryPoint()
         {
             CircularNetworkFunctions.RecvOne(cfb, true, false);
-            CircularNetworkFunctions.SendOne(cfb, true, true, false);
-            while (true) generate_packet();
+
+            while (true)
+            {
+                generate_packet();
+            }
         }
 
         private static int Main()
@@ -86,14 +92,14 @@ namespace EmuLibrary
 
             SetPacketData();
             generate_packet();
-            
+
             //cfb.PrintContents();
             //cfb.ResetPeek();
             //ep.Parse(cfb);
             //System.Console.WriteLine(ep.Ethertype);
             //System.Console.WriteLine((cfb.PeekData.Tdata1 >> 52) & 0x0f);
             //System.Console.WriteLine(ep.IsIPv4);
-    
+
             return 0;
         }
     }

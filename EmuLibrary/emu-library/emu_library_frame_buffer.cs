@@ -1,6 +1,6 @@
 ﻿// Emu library frame buffer
 //
-// Copyright 2017-10`8 Mark Deng <mtd36@cam.ac.uk>
+// Copyright 2017-1018 Mark Deng <mtd36@cam.ac.uk>
 // All rights reserved
 //
 // Use of this source code is governed by the Apache 2.0 license; see LICENSE file

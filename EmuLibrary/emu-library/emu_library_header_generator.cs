@@ -1,9 +1,9 @@
-﻿//	Emu header generation library
+﻿// Emu header generation library
 //
-//	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
-//	All rights reserved
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+// All rights reserved
 //
-//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
 using KiwiSystem;

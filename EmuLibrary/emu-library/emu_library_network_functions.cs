@@ -1,9 +1,9 @@
-//	Emu network library
+// Emu network library
 //
-//	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
-//	All rights reserved
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+// All rights reserved
 //
-//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
 using KiwiSystem;
@@ -84,7 +84,7 @@ namespace EmuLibrary
             
             if (Emu.s_axis_tvalid && cfb.CanPush())
             {
-		Emu.s_axis_tready = true;
+		        Emu.s_axis_tready = true;
                 cfb.PushData.Tkeep = Emu.s_axis_tkeep;
                 cfb.PushData.Tlast = Emu.s_axis_tlast;
                 cfb.PushData.Tdata0 = Emu.s_axis_tdata_0;
@@ -159,6 +159,10 @@ namespace EmuLibrary
             return 3U;
         }
 
+        /*
+        * Function: SetData
+        * Description: Pop and set the output data to the popped contents.
+        */    
         private static bool SetData(CircularFrameBuffer cfb, bool movepeek = false, bool wait = false, bool valid = true)
         {
             bool ready = Emu.m_axis_tready;
@@ -187,7 +191,10 @@ namespace EmuLibrary
             return ready;
         }
 
-        
+        /*
+        * Function: WaitReady
+        * Description: Wait until the receiver is ready to accept data.
+        */    
         private static void WaitReady()
         {
             while (!Emu.m_axis_tready)
@@ -353,17 +360,21 @@ namespace EmuLibrary
             return true;
         }
         
+        /*
+        * Function: NumSize
+        * Description: Calculate the size of tkeep
+        */    
         private static uint NumSize(ulong input)
         {
             if (input == 0) return 64;
 
             uint n = 1;
             
-            if ((input >> 32) == 0) { n = n + 32; input = input << 32; }
-            if ((input >> 48) == 0) { n = n + 16; input = input << 16; }
-            if ((input >> 56) == 0) { n = n + 8; input = input << 8; }
-            if ((input >> 60) == 0) { n = n + 4; input = input << 4; }
-            if ((input >> 62) == 0) { n = n + 2; input = input << 2; }
+            if (input >> 32 == 0) { n = n + 32; input = input << 32; }
+            if (input >> 48 == 0) { n = n + 16; input = input << 16; }
+            if (input >> 56 == 0) { n = n + 8; input = input << 8; }
+            if (input >> 60 == 0) { n = n + 4; input = input << 4; }
+            if (input >> 62 == 0) { n = n + 2; input = input << 2; }
             n = n - (uint) (input >> 63);
 
             return 64 - n;
@@ -371,7 +382,10 @@ namespace EmuLibrary
     }
     
     
-
+    /*
+    * Class: crc32
+    * Description: A class to calculate crc32.
+    */    
     public class crc32
     {
         private static readonly uint[] crc_table = {
@@ -411,6 +425,10 @@ namespace EmuLibrary
     
         private static ulong crc_value = 0xffffffff;
 
+        /*
+        * Function: CRC_Compute
+        * Description: Add the contents of the buffer entry to the crc.
+        */    
         public void CRC_Compute(CircularFrameBuffer.BufferEntry be)
         {
             CRC_Compute(be.Tdata0);
@@ -419,6 +437,10 @@ namespace EmuLibrary
             CRC_Compute(be.Tdata3);
         }
 
+        /*
+        * Function: CRC_Compute
+        * Description: Add the contents of data to the crc.
+        */    
         public void CRC_Compute(ulong data)
         {
             while (data > 0)
@@ -428,6 +450,10 @@ namespace EmuLibrary
             }
         }
         
+        /*
+        * Function: CRC_Compute
+        * Description: Add the contents of data to the crc.
+        */   
         public void CRC_Compute(uint data)
         {
             while (data > 0)
@@ -437,22 +463,38 @@ namespace EmuLibrary
             }
         }
 
+        /*
+        * Function: CRC_Compute
+        * Description: Add the contents of data to the crc.
+        */   
         public void CRC_Compute(byte data)
         {
             byte j = (byte) (((byte) (crc_value) ^ data) & 0xFF);
             crc_value = (crc_value >> 8) ^ crc_table[j];
         }
 
+        /*
+        * Function: CRC_Finalise
+        * Description: Finalise the crc so that it can be used.
+        */   
         public ulong CRC_Finalise()
         {
             return crc_value ^ 0xffffffff;
         }
 
+        /*
+        * Function: CRC_LittleEndian
+        * Description: Finalize and convert to little endian.
+        */ 
         public ulong CRC_LittleEndian()
         {
             return Emu.SwapEndian(CRC_Finalise());
         }
 
+        /*
+        * Function: Reset
+        * Description: Reset so that a new crc can be computed.
+        */ 
         public void Reset()
         {
             crc_value = 0xffffffff;

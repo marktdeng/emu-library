@@ -1,9 +1,9 @@
-//	Emu packet parsing library
+// Emu packet parsing library
 //
-//	Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
-//	All rights reserved
+// Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
+// All rights reserved
 //
-//	Use of this source code is governed by the Apache 2.0 license; see LICENSE file
+// Use of this source code is governed by the Apache 2.0 license; see LICENSE file
 //
 
 namespace EmuLibrary
@@ -14,12 +14,21 @@ namespace EmuLibrary
         public ulong RecvInterface;
         public ulong BroadcastInterfaces;
 
+        
+        /*
+        * Function: Parse
+        * Description: Parse peeked data from buffer
+        */    
         public int Parse(CircularFrameBuffer cfb)
         {
             cfb.Peek();
             return Parse(cfb.PeekData.TuserLow);
         }
 
+        /*
+        * Function: Parse
+        * Description: Parse a raw tuser_low value
+        */ 
         public int Parse(ulong tuserLow)
         {
             Metadata = tuserLow;
@@ -41,6 +50,10 @@ namespace EmuLibrary
         public ulong Metadata;
         public ulong SrcMac;
 
+        /*
+        * Function: Parse
+        * Description: Parse peeked data from buffer
+        */ 
         public int Parse(CircularFrameBuffer cfb)
         {
             //while (!cfb.CanAdvance()) return 2;
@@ -52,6 +65,10 @@ namespace EmuLibrary
             }
         }
 
+        /*
+        * Function: Parse
+        * Description: Parse values from the given data
+        */ 
         public int Parse(ulong tdata0, ulong tdata1, ulong tuserLow)
         {
             Metadata = tuserLow;
@@ -66,6 +83,10 @@ namespace EmuLibrary
             return 0;
         }
 
+        /*
+        * Function: PushHeader
+        * Description: Deparse the data within the header and push onto the buffer
+        */ 
         public void PushHeader(CircularFrameBuffer cfb)
         {
             WriteToBuffer(cfb.PushData);
@@ -73,6 +94,10 @@ namespace EmuLibrary
             cfb.Push(cfb.PushData);
         }
 
+        /*
+        * Function: PushHeader
+        * Description: Deparse the provided data and push onto the buffer
+        */ 
         public static void PushHeader(CircularFrameBuffer cfb, ulong destMac, ulong srcMac, uint ethertype,
             ulong metadata)
         {
@@ -81,11 +106,19 @@ namespace EmuLibrary
             cfb.Push(cfb.PushData);
         }
 
+        /*
+        * Function: UpdateHeader
+        * Description: Deparse the header data and write to current peek location
+        */ 
         public void UpdateHeader(CircularFrameBuffer cfb)
         {
             UpdateHeader(cfb, DestMac, SrcMac, Ethertype, Metadata);
         }
 
+        /*
+        * Function: UpdateHeader
+        * Description: Deparse the provided header data and write to current peek location
+        */ 
         public void UpdateHeader(CircularFrameBuffer cfb, ulong destMac, ulong srcMac, uint ethertype,
             ulong metadata)
         {
@@ -95,11 +128,19 @@ namespace EmuLibrary
             cfb.UpdatePeek(cfb.PeekData);
         }
 
+        /*
+        * Function: WriteToBuffer
+        * Description: Deparse the header data and write to a bufferentry
+        */ 
         public void WriteToBuffer(CircularFrameBuffer.BufferEntry be)
         {
             WriteToBuffer(be, DestMac, SrcMac, Ethertype, Metadata);
         }
 
+        /*
+        * Function: UpdateHeader
+        * Description: Deparse the provided header data and write to current peek data
+        */ 
         public static void WriteToBuffer(CircularFrameBuffer.BufferEntry be, ulong destMac, ulong srcMac,
             uint ethertype, ulong metadata)
         {
@@ -131,6 +172,10 @@ namespace EmuLibrary
         public byte TTL;
         public byte Version;
 
+        /*
+        * Function: Rearrange
+        * Description: Rearrange the buffer data into a temporary holding buffer to prepare for parsing
+        */ 
         public byte Rearrange(CircularFrameBuffer cfb, bool skip = false)
         {
             //lock (cfb.PeekData)
@@ -172,6 +217,10 @@ namespace EmuLibrary
             return 0;
         }
 
+        /*
+        * Function: ParseArranged
+        * Description: Parse rearranged data.
+        */ 
         public void ParseArranged()
         {
             Version = (byte) ((data_0 >> 4) & 0x0f);
@@ -189,6 +238,10 @@ namespace EmuLibrary
             DestIp = data_2 & 0x00ffffffff;
         }
 
+        /*
+        * Function: AssembleHeader
+        * Description: Deparse the header fields into the temporary buffer
+        */ 
         public void AssembleHeader()
         {
             data_0 = IHL | ((ulong) Version << 4) | ((ulong) DSCP << 10) | ((ulong) ECN << 8) |
@@ -200,6 +253,10 @@ namespace EmuLibrary
             data_2 = DestIp;
         }
 
+        /*
+        * Function: WriteHeader
+        * Description: Write the temporary buffer back into the main buffer.
+        */ 
         public void WriteHeader(CircularFrameBuffer cfb, bool push, bool assembled = false)
         {
             if (!assembled) AssembleHeader();
@@ -236,6 +293,10 @@ namespace EmuLibrary
             }
         }
 
+        /*
+        * Function: WriteHeader
+        * Description: Write the temporary buffer back into a bufferentry.
+        */ 
         public void WriteToBuffer(CircularFrameBuffer.BufferEntry be, uint part)
         {
             if (part == 0)
@@ -266,8 +327,11 @@ namespace EmuLibrary
                 }
             }
         }
-
-
+    
+        /*
+        * Function: Parse
+        * Description: Rearrange and then parse the rearranged data.
+        */ 
         public byte Parse(CircularFrameBuffer cfb, bool skip = false)
         {
             var result = Rearrange(cfb, skip);
@@ -275,6 +339,10 @@ namespace EmuLibrary
             return result;
         }
 
+        /*
+        * Function: ParseSplit
+        * Description: A two-part parser to allow the first section of the packet to be parsed.
+        */ 
         public byte ParseSplit(CircularFrameBuffer cfb, bool skip = false)
         {
             //lock (cfb.PeekData)
@@ -335,7 +403,10 @@ namespace EmuLibrary
             return 0;
         }
 
-
+        /*
+        * Function: CalculateCheckSum
+        * Description: Calculate the header checksum
+        */ 
         public uint CalculateCheckSum(bool includeHeader = false)
         {
             uint result = 0;
@@ -354,6 +425,10 @@ namespace EmuLibrary
             return (result ^ 0xffff) & 0xFFFF;
         }
 
+        /*
+        * Function: VerifyCheckSum
+        * Description: Check that the checksum is valid
+        */ 
         public bool VerifyCheckSum()
         {
             return CalculateCheckSum(true) == 0x0000;
@@ -373,7 +448,10 @@ namespace EmuLibrary
         public byte TrafficClass;
         public byte Version;
 
-
+        /*
+        * Function: Parse
+        * Description: Parse peeked data from buffer
+        */ 
         public byte Parse(CircularFrameBuffer cfb, bool skip = false)
         {
             if (!skip)
@@ -416,6 +494,10 @@ namespace EmuLibrary
         public uint Length;
         public uint SrcPort;
 
+        /*
+        * Function: Parse
+        * Description: Parse peeked data from buffer
+        */ 
         public byte Parse(CircularFrameBuffer cfb, uint ipHeaderLength, bool skip = false)
         {
             var startloc = 1 + ipHeaderLength / 64 - 4;
@@ -500,6 +582,10 @@ namespace EmuLibrary
             return 0;
         }
 
+        /*
+        * Function: WriteToBuffer
+        * Description: Deparse and write to a bufferentry
+        */ 
         public byte WriteToBuffer(CircularFrameBuffer.BufferEntry be, byte offset)
         {
             for (byte dataitem = 0; dataitem < 4; dataitem++)
@@ -584,7 +670,10 @@ namespace EmuLibrary
         public byte DataOffset;
         public uint WindowSize;
         
-
+        /*
+        * Function: Parse
+        * Description: Parse peeked data from buffer
+        */ 
         public byte Parse(CircularFrameBuffer cfb, uint ipHeaderLength, bool skip = false)
         {
             var startloc = 1 + ipHeaderLength / 64 - 4;

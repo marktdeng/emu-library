@@ -8,8 +8,9 @@
 //
 //  Modified to make use of the Emu Library
 //
+//  Copyright 2016 Salvator Galea <salvator.galea@cl.cam.ac.uk>
+//
 //  Modifications Copyright 2018 Mark Deng <mtd36@cam.ac.uk>
-//  Copyright 2016    Salvator Galea    <salvator.galea@cl.cam.ac.uk>
 //
 //  All rights reserved
 //
